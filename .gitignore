@@ -9,9 +9,13 @@
 .project
 .classpath
 *.launch
-.settings/
-
+.settings
+.ionide/
 
 #System Files
 .DS_Store
 Thumbs.db
+
+# .NET
+bin
+obj
