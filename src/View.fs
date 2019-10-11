@@ -2,6 +2,7 @@ module View
 
 open Fable.React
 open Fable.React.Props
+open Fable.RemoteData
 
 open Types
 
@@ -36,7 +37,7 @@ let navbar =
             ]
         ]
 
-let article =
+let article (article : Article) =
     div
         [ ClassName "article-preview" ]
         [
@@ -46,26 +47,26 @@ let article =
                     a
                         [ Href "#" ]
                         [
-                            img [ Src "http://i.imgur.com/Qr71crq.jpg" ]
+                            img [ Src article.Author.Image ]
                         ]
                     div
                         [ ClassName "info" ]
                         [
-                            a [ ClassName "author" ] [ str "Eric Simons" ]
-                            span [ ClassName "date" ] [ str "January 20th" ]
+                            a [ ClassName "author" ] [ str article.Author.Username ]
+                            span [ ClassName "date" ] [ str <| article.CreatedAt.ToLongDateString() ]
                         ]
                     button
                         [ ClassName "btn btn-outline-primary btn-sm pull-xs-right" ]
                         [
                             i [ ClassName "ion-heart" ] []
-                            str " 29"
+                            str <| sprintf " %i" article.FavoritesCount
                         ]
                 ]
             a
                 [ ClassName "preview-link" ]
                 [
-                    h1 [] [ str "How to build webapps that scale" ]
-                    p [] [ str "This is the description for the post." ]
+                    h1 [] [ str article.Title ]
+                    p [] [ str article.Description ]
                     span [] [ str "Read more..." ]
                 ]
         ]
@@ -90,7 +91,7 @@ let sidebar =
         ]
 
 
-let home =
+let home model =
     div
         [ ClassName "home-page" ]
         [
@@ -131,7 +132,18 @@ let home =
                                                         ]
                                                 ]
                                         ]
-                                    article
+                                    (
+                                        match model.Articles with
+                                        | Success articles ->
+                                            div
+                                                []
+                                                (List.map article articles)
+                                                
+                                        | Loading ->
+                                            div [] [ str "Loading..." ]
+                                        | _ ->
+                                            str ""
+                                    )
                                 ]
                             div
                                 [ ClassName "col-md-3" ]
@@ -147,5 +159,5 @@ let rootView (model : Model) dispatch =
         []
         [
             navbar
-            home
+            home model
         ]
