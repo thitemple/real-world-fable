@@ -24,14 +24,16 @@ type Article = {
     Author : Author
 }
 
-type ArticlesResponse = {
+type ArticlesList = {
     Articles : Article list
     ArticlesCount : int
 }
 
 type Model = {
-    Articles : RemoteData<exn, Article list>
+    Articles : RemoteData<exn, ArticlesList>
+    CurrentArticlesPage : int
 }
 
 type Msg =
-    | ArticlesFetched of RemoteData<exn, Article list>
+    | ArticlesFetched of articles: RemoteData<exn, ArticlesList>
+    | SetArticlesPage of int

@@ -90,8 +90,33 @@ let sidebar =
                 ]
         ]
 
+let pagination dispatch currentPage totalArticles =
+    ul
+        [ ClassName "pagination" ]
+        (
+            seq { for i in 1 .. totalArticles / 10 ->
+                    li
+                        [
+                            classList [
+                                ("page-item", true)
+                                ("active", i = currentPage)
+                            ]
+                        ]
+                        [
+                            a [
+                                ClassName "page-link"
+                                Href "#"
+                                OnClick (fun ev ->
+                                    ev.preventDefault()
+                                    dispatch <| SetArticlesPage i
+                                )
+                            ] [ str <| sprintf "%i" i ]
+                        ]
+            }
+        )
 
-let home model =
+
+let home dispatch model =
     div
         [ ClassName "home-page" ]
         [
@@ -135,13 +160,18 @@ let home model =
                                     (
                                         match model.Articles with
                                         | Success articles ->
-                                            div
-                                                []
-                                                (List.map article articles)
-                                                
+                                            fragment []
+                                                [
+                                                    div
+                                                        []
+                                                        (List.map article articles.Articles)
+                                                    pagination dispatch model.CurrentArticlesPage articles.ArticlesCount
+                                                ]
                                         | Loading ->
                                             div [] [ str "Loading..." ]
-                                        | _ ->
+                                        | Failure _ ->
+                                            str <| sprintf "There was an issue fetching the articles"
+                                        | NotAsked ->
                                             str ""
                                     )
                                 ]
@@ -159,5 +189,5 @@ let rootView (model : Model) dispatch =
         []
         [
             navbar
-            home model
+            home dispatch model
         ]
