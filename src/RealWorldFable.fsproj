@@ -3,13 +3,11 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\elmish-router\src\Elmish.Router.fsproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Routes.fs" />
-    <Compile Include="Types.fs" />
-    <Compile Include="State.fs" />
-    <Compile Include="View.fs" />
+    <Compile Include="Shared/Router.fs" />
+    <Compile Include="Shared/Types.fs" />
+    <Compile Include="Shared/Api.fs" />
+    <Compile Include="Pages/Articles.fs" />
+    <Compile Include="Pages/Article.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>
   <ItemGroup>

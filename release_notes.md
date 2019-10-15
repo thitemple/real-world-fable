@@ -1,3 +1,7 @@
+## 10 - Elmish original Router
+- Setup router
+- Display article
+
 ## 09 - Setup Elmish.Router
 - Setup elmish router
 - Add a Articles page
