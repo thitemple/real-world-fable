@@ -8,6 +8,8 @@
     <Compile Include="Shared/Api.fs" />
     <Compile Include="Pages/Articles.fs" />
     <Compile Include="Pages/Article.fs" />
+    <Compile Include="Pages/Login.fs" />
+    <Compile Include="Pages/Register.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>
   <ItemGroup>

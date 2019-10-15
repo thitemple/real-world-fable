@@ -1,3 +1,5 @@
+## 11 - Adds login and register pages
+
 ## 10 - Elmish original Router
 - Setup router
 - Display article

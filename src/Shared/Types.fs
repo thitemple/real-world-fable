@@ -3,6 +3,9 @@ module Shared.Types
 open System
 open Thoth.Json
 
+type Session =
+    { Username: string }
+
 type Author =
     { Username: string
       Bio: string option
