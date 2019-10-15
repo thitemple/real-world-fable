@@ -43,13 +43,19 @@ type ArticlesList = {
     ArticlesCount : int
 }
 
+open Elmish.Router
+open Routes
+
+type Msg =
+    | NavigateTo of Routes.Page
+    | ArticlesFetched of articles: RemoteData<exn, ArticlesList>
+    | TagsFetched of articles: RemoteData<exn, Tag list>
+    | SetArticlesPage of int
+
 type Model = {
     Articles : RemoteData<exn, ArticlesList>
     PopularTags : RemoteData<exn, Tag list>
     CurrentArticlesPage : int
+    CurrentPage : Page
+    RouterModel : RouterModel<Model, Msg, Page>
 }
-
-type Msg =
-    | ArticlesFetched of articles: RemoteData<exn, ArticlesList>
-    | TagsFetched of articles: RemoteData<exn, Tag list>
-    | SetArticlesPage of int

@@ -126,7 +126,7 @@ let pagination dispatch currentPage totalArticles =
         )
 
 
-let home dispatch model =
+let articles dispatch model =
     div
         [ ClassName "home-page" ]
         [
@@ -199,5 +199,8 @@ let rootView (model : Model) dispatch =
         []
         [
             navbar
-            home dispatch model
+            (match model.CurrentPage with
+            | Routes.Articles ->
+                articles dispatch model
+            )
         ]

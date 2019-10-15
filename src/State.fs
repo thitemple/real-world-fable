@@ -2,10 +2,10 @@ module State
 
 open Fetch
 open Thoth.Json
-
 open Elmish
 open Fable.RemoteData
 
+open Routes
 open Types
 
 module Cmds =
@@ -42,12 +42,24 @@ module Cmds =
             }
         Cmd.OfPromise.either tagsApi () TagsFetched (Failure >> TagsFetched)
 
-let init() : Model * Cmd<Msg> =
+let updateCurrentPage page  model =
+    { model with CurrentPage = page }
+
+
+let init defaultPage page : Model * Cmd<Msg> =
+    let routerConfig: Router.RouterModelOptions<Model, Msg, Page> =
+        { Steps = []
+          DefaultNotFoundRoute = Articles
+          CheckRoutesEquality = Router.RouteComparer.simpleComparison
+          OnNavigationSucceeded = updateCurrentPage }
+
     let initialPage = 1
     {
         Articles = Loading
         PopularTags = Loading
         CurrentArticlesPage = initialPage
+        CurrentPage = Option.defaultValue defaultPage page
+        RouterModel = Router.init routerConfig
     }, Cmd.batch [
         Cmds.fetchArticles initialPage
         Cmds.fetchTags
@@ -55,6 +67,9 @@ let init() : Model * Cmd<Msg> =
 
 let update msg model : Model * Cmd<Msg> =
     match msg with
+    | NavigateTo page ->
+        Router.handleNavigationAttempt model.RouterModel page model
+
     | ArticlesFetched data ->
         { model with Articles = data }, Cmd.none
 

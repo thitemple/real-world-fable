@@ -1,3 +1,7 @@
+## 09 - Setup Elmish.Router
+- Setup elmish router
+- Add a Articles page
+
 ## 08 - List Tags
 - Fetches popular tag list
 - Display tags in view
