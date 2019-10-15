@@ -68,10 +68,16 @@ let article (article : Article) =
                     h1 [] [ str article.Title ]
                     p [] [ str article.Description ]
                     span [] [ str "Read more..." ]
+                    ul
+                        [ ClassName "tag-list" ]
+                        (List.map
+                            (fun tag -> li [ ClassName "tag-default tag-pill tag-outline" ] [ str tag ])
+                            article.TagList
+                        )
                 ]
         ]
 
-let sidebar =
+let sidebar dispatch popularTags =
     div
         [ ClassName "sidebar" ]
         [
@@ -79,14 +85,18 @@ let sidebar =
             div
                 [ ClassName "tag-list" ]
                 [
-                    a [ ClassName "tag-pill tag-default" ] [ str "programming" ]
-                    a [ ClassName "tag-pill tag-default" ] [ str "javascript" ]
-                    a [ ClassName "tag-pill tag-default" ] [ str "emberjs" ]
-                    a [ ClassName "tag-pill tag-default" ] [ str "angularjs" ]
-                    a [ ClassName "tag-pill tag-default" ] [ str "react" ]
-                    a [ ClassName "tag-pill tag-default" ] [ str "mean" ]
-                    a [ ClassName "tag-pill tag-default" ] [ str "node" ]
-                    a [ ClassName "tag-pill tag-default" ] [ str "fsharp" ]
+                    (match popularTags with
+                    | Success tags ->
+                        fragment []
+                            (
+                                List.map
+                                    (fun (Tag tag) ->
+                                        a [ ClassName "tag-pill tag-default" ] [ str tag ]
+                                    )
+                                    tags
+                            )
+                    | _ -> str ""
+                    )
                 ]
         ]
 
@@ -178,7 +188,7 @@ let home dispatch model =
                             div
                                 [ ClassName "col-md-3" ]
                                 [
-                                    sidebar
+                                    sidebar dispatch model.PopularTags
                                 ]
                         ]
                 ]

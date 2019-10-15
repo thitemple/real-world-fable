@@ -1,3 +1,9 @@
+## 08 - List Tags
+- Fetches popular tag list
+- Display tags in view
+- Display tags from an article
+- Decoder for tags
+
 ## 07 - Fetching Articles
 - Fetches the articles data using a command
 - Display actual articles data
