@@ -63,15 +63,28 @@ let private update msg model: Model * Cmd<Msg> =
         { model with ActivePage = Login loginModel }, Cmd.map LoginMsg loginCmd
 
     | RegisterMsg registerMsg, Register registerModel ->
-        let registerModel, registerCmd = Pages.Register.update registerMsg registerModel
-        { model with ActivePage = Register registerModel }, Cmd.map RegisterMsg registerCmd
+        let registerModel, registerCmd, externalMsg = Pages.Register.update registerMsg registerModel
+
+        let (model, externalCmd) =
+            match externalMsg with
+            | Pages.Register.ExternalMsg.NoOp -> model, Cmd.none
+            | Pages.Register.ExternalMsg.UserCreated session ->
+                { model with Session = Some session }, Route.Article ArticlesList |> newUrl
+
+        { model with ActivePage = Register registerModel },
+        Cmd.batch
+            [ Cmd.map RegisterMsg registerCmd
+              externalCmd ]
 
     | _ -> model, Cmd.none
 
 open Fable.React
 open Fable.React.Props
 
-let navbar session activePage =
+let isActiveRoute optRoute targetRoute =
+    Option.map (fun route -> route = targetRoute) optRoute |> Option.defaultValue false
+
+let navbar isActiveRoute session =
     nav [ ClassName "navbar navbar-light" ]
         [ div [ ClassName "container" ]
               [ a [ ClassName "navbar-brand" ] [ str "conduit" ]
@@ -81,7 +94,7 @@ let navbar session activePage =
                               [ ClassName "nav-link active"
                                 classList
                                     [ ("nav-link", true)
-                                      ("active", true) ]
+                                      ("active", isActiveRoute <| Route.Article ArticlesList) ]
                                 href (Route.Article ArticlesList) ] [ str "Home" ] ]
                       (match session with
                        | Some _ ->
@@ -98,13 +111,20 @@ let navbar session activePage =
                            fragment []
                                [ li [ ClassName "nav-item" ]
                                      [ a
-                                         [ ClassName "nav-link"
+                                         [ classList
+                                             [ ("nav-link", true)
+                                               ("active", isActiveRoute Route.Login) ]
                                            href Route.Login ] [ str "Sign in" ] ]
-                                 li [ ClassName "nav-item" ] [ a [ ClassName "nav-link" ] [ str "Sign up" ] ] ]) ] ] ]
+                                 li [ ClassName "nav-item" ]
+                                     [ a
+                                         [ classList
+                                             [ ("nav-link", true)
+                                               ("active", isActiveRoute Route.Register) ]
+                                           href Route.Register ] [ str "Sign up" ] ] ]) ] ] ]
 
 let private rootView (model: Model) dispatch =
     div []
-        [ navbar model.Session model.ActivePage
+        [ navbar (isActiveRoute model.CurrentRoute) model.Session
           (match model.ActivePage with
            | Articles articlesModel -> Pages.Articles.view (ArticlesMsg >> dispatch) articlesModel
            | Article articleModel -> Pages.Article.view (ArticleMsg >> dispatch) articleModel

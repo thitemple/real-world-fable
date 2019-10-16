@@ -4,7 +4,29 @@ open System
 open Thoth.Json
 
 type Session =
-    { Username: string }
+    { Username: string
+      Token: string }
+
+    static member Decoder username: Decoder<Session> =
+        Decode.object <| fun get ->
+            { Username = username
+              Token = get.Required.At [ "user"; "token" ] Decode.string }
+
+
+type User =
+    { Id: int
+      Username: string
+      Email: string
+      Bio: string option
+      Image: string option }
+
+    static member Decoder: Decoder<User> =
+        Decode.object <| fun get ->
+            { Id = get.Required.At [ "user"; "id" ] Decode.int
+              Username = get.Required.At [ "user"; "username" ] Decode.string
+              Email = get.Required.At [ "user"; "email" ] Decode.string
+              Bio = get.Optional.At [ "user"; "bio" ] Decode.string
+              Image = get.Optional.At [ "user"; "image" ] Decode.string }
 
 type Author =
     { Username: string

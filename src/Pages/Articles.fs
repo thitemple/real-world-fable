@@ -21,9 +21,9 @@ type Model =
 
 let private fetchArticles page =
     let offset = page - 1
-    Cmd.OfPromise.either Articles.fetchArticles offset ArticlesFetched (Failure >> ArticlesFetched)
+    Cmd.OfAsync.perform Articles.fetchArticles offset ArticlesFetched
 
-let private fetchTags = Cmd.OfPromise.either Tags.fetchTags () TagsFetched (Failure >> TagsFetched)
+let private fetchTags = Cmd.OfAsync.perform Tags.fetchTags () TagsFetched
 
 let init() =
     { Articles = Loading

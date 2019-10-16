@@ -1,3 +1,8 @@
+## 12 - Creates a new user
+- Switches to use Fable.SimpleHttp
+- Creates a new user
+- Navbar checks for current active route
+
 ## 11 - Adds login and register pages
 
 ## 10 - Elmish original Router

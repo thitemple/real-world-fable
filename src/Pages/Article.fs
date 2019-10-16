@@ -17,10 +17,10 @@ type Msg =
     | CommentsFetched of RemoteData<exn, Comment list>
 
 let private fetchArticle slug =
-    Cmd.OfPromise.either Articles.fetchArticle slug ArticleFetched (Failure >> ArticleFetched)
+    Cmd.OfAsync.perform Articles.fetchArticle slug ArticleFetched
 
 let private fetchComments slug =
-    Cmd.OfPromise.either Articles.fetchComments slug CommentsFetched (Failure >> CommentsFetched)
+    Cmd.OfAsync.perform Articles.fetchComments slug CommentsFetched
 
 let init slug =
     { Article = Loading

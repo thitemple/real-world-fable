@@ -19,10 +19,9 @@
     <PackageReference Include="Fable.Elmish.Debugger" Version="3.0.3" />
     <PackageReference Include="Fable.Elmish.HMR" Version="4.0.1" />
     <PackageReference Include="Fable.Elmish.React" Version="3.0.1" />
-    <PackageReference Include="Fable.Fetch" Version="2.1.0" />
-    <PackageReference Include="Fable.Promise" Version="2.0.0" />
     <PackageReference Include="Fable.React" Version="5.3.4" />
     <PackageReference Include="Fable.RemoteData" Version="1.0.2" />
+    <PackageReference Include="Fable.SimpleHttp" Version="2.6.0" />
     <PackageReference Include="Thoth.Json" Version="3.3.0" />
   </ItemGroup>
 </Project>
