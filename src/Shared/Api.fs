@@ -21,6 +21,16 @@ let private post url data =
         return response.statusCode, response.responseText
     }
 
+let private safeGet url session =
+
+    async {
+        let! response = Http.request url
+                        |> Http.method GET
+                        |> Http.header (Headers.authorization <| sprintf "Token %s" session.Token)
+                        |> Http.send
+        return response.statusCode, response.responseText
+    }
+
 
 module Articles =
 
@@ -42,7 +52,7 @@ module Articles =
         async {
             let! (statusCode, responseText) = Http.get <| sprintf "%s/%s" articlesBaseUrl slug
             if statusCode = 200 then
-                let result = Decode.fromString Article.Decoder responseText
+                let result = Decode.fromString (Decode.field "article" Article.Decoder) responseText
                 match result with
                 | Ok data -> return Success data
                 | Error err -> return Failure <| exn err
@@ -91,7 +101,7 @@ module Users =
                 | Ok p -> return Failure p
                 | Error e -> return Failure(Map.ofList [ "Decoding error", [ e ] ])
             else
-                let decodedSession = Decode.fromString Session.Decoder responseText
+                let decodedSession = Decode.fromString (Decode.field "user" Session.Decoder) responseText
                 match decodedSession with
                 | Ok session -> return Success(session)
                 | Error e -> return Failure(Map.ofList [ "Decoding error", [ e ] ])
@@ -103,7 +113,7 @@ module Users =
             let! (statusCode, responseText) = post url {| user = credentials |}
 
             if statusCode = 200 then
-                let decodedSession = Decode.fromString Session.Decoder responseText
+                let decodedSession = Decode.fromString (Decode.field "user" Session.Decoder) responseText
                 match decodedSession with
                 | Ok session -> return Success(session)
                 | Error e -> return Failure(Map.ofList [ "Decoding error", [ e ] ])
@@ -114,3 +124,19 @@ module Users =
                 | Ok p -> return Failure p
                 | Error e -> return Failure(Map.ofList [ "Decoding error", [ e ] ])
         }
+
+    let fetchUserWithDecoder (decoder: Decoder<'a>) (session: Session) =
+        let url = sprintf "%suser/" baseUrl
+        async {
+            let! (statusCode, responseText) = safeGet url session
+
+            if statusCode = 200 then
+                let decodedUser = Decode.fromString (Decode.field "user" decoder) responseText
+                match decodedUser with
+                | Ok user -> return Success user
+                | Error e -> return Failure <| exn e
+            else
+                return Failure <| exn responseText
+        }
+
+    let fetchUser (session: Session) = async { return! fetchUserWithDecoder User.Decoder session }

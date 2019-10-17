@@ -12,24 +12,20 @@ type User =
 
     static member Decoder: Decoder<User> =
         Decode.object <| fun get ->
-            { Id = get.Required.At [ "user"; "id" ] Decode.int
-              Username = get.Required.At [ "user"; "username" ] Decode.string
-              Email = get.Required.At [ "user"; "email" ] Decode.string
-              Bio = get.Optional.At [ "user"; "bio" ] Decode.string
-              Image = get.Optional.At [ "user"; "image" ] Decode.string }
+            { Id = get.Required.Field "id" Decode.int
+              Username = get.Required.Field "username" Decode.string
+              Email = get.Required.Field "email" Decode.string
+              Bio = get.Optional.Field "bio" Decode.string
+              Image = get.Optional.Field "image" Decode.string }
 
 type Session =
     { Username: string
       Token: string }
 
     static member Decoder: Decoder<Session> =
-        Decode.oneOf
-            [ Decode.object <| fun get ->
-                { Username = get.Required.At [ "user"; "username" ] Decode.string
-                  Token = get.Required.At [ "user"; "token" ] Decode.string }
-              Decode.object <| fun get ->
-                  { Username = get.Required.Field "username" Decode.string
-                    Token = get.Required.Field "token" Decode.string } ]
+        Decode.object <| fun get ->
+            { Username = get.Required.Field "username" Decode.string
+              Token = get.Required.Field "token" Decode.string }
 
 type Author =
     { Username: string
@@ -63,16 +59,16 @@ type Article =
       Author: Author }
     static member Decoder: Decoder<Article> =
         Decode.object <| fun get ->
-            { Slug = get.Required.At [ "article"; "slug" ] Decode.string
-              Title = get.Required.At [ "article"; "title" ] Decode.string
-              Description = get.Required.At [ "article"; "description" ] Decode.string
-              Body = get.Required.At [ "article"; "body" ] Decode.string
-              TagList = get.Required.At [ "article"; "tagList" ] (Decode.list Decode.string)
-              CreatedAt = get.Required.At [ "article"; "createdAt" ] Decode.datetime
-              UpdatedAt = get.Required.At [ "article"; "updatedAt" ] Decode.datetime
-              Favorited = get.Required.At [ "article"; "favorited" ] Decode.bool
-              FavoritesCount = get.Required.At [ "article"; "favoritesCount" ] Decode.int
-              Author = get.Required.At [ "article"; "author" ] Author.Decoder }
+            { Slug = get.Required.Field "slug" Decode.string
+              Title = get.Required.Field "title" Decode.string
+              Description = get.Required.Field "description" Decode.string
+              Body = get.Required.Field "body" Decode.string
+              TagList = get.Required.Field "tagList" (Decode.list Decode.string)
+              CreatedAt = get.Required.Field "createdAt" Decode.datetime
+              UpdatedAt = get.Required.Field "updatedAt" Decode.datetime
+              Favorited = get.Required.Field "favorited" Decode.bool
+              FavoritesCount = get.Required.Field "favoritesCount" Decode.int
+              Author = get.Required.Field "author" Author.Decoder }
 
 type ArticlesList =
     { Articles: Article list

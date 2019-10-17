@@ -10,6 +10,7 @@
     <Compile Include="Pages/Article.fs" />
     <Compile Include="Pages/Login.fs" />
     <Compile Include="Pages/Register.fs" />
+    <Compile Include="Pages/Settings.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>
   <ItemGroup>

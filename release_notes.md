@@ -1,3 +1,5 @@
+## 14a - Load settings data
+
 ## 13 - Login
 - Logs in a user
 - Saves session in local storage

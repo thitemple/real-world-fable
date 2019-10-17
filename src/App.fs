@@ -13,12 +13,14 @@ type Page =
     | Register of Pages.Register.Model
     | Articles of Pages.Articles.Model
     | Article of Pages.Article.Model
+    | Settings of Pages.Settings.Model
 
 type Msg =
     | ArticlesMsg of Pages.Articles.Msg
     | ArticleMsg of Pages.Article.Msg
     | LoginMsg of Pages.Login.Msg
     | RegisterMsg of Pages.Register.Msg
+    | SettingsMsg of Pages.Settings.Msg
     | NoOp
 
 type Model =
@@ -36,7 +38,7 @@ let private setRoute result model =
         | SessionRoute sessionRoute ->
             match model.Session with
             | None -> model, newUrl Route.Login
-            | Some _ ->
+            | Some session ->
                 match sessionRoute with
                 | Logout ->
                     { model with Session = None },
@@ -44,6 +46,9 @@ let private setRoute result model =
                         [ newUrl <| Route.Article ArticlesList
                           Cmd.OfFunc.perform (fun _ -> Browser.WebStorage.localStorage.removeItem ("session")) ()
                               (fun _ -> NoOp) ]
+                | SessionRoute.Settings ->
+                    let settingsModel, settingsCmd = Pages.Settings.init session
+                    { model with ActivePage = Settings settingsModel }, Cmd.map SettingsMsg settingsCmd
                 // TODO: other secure pages
                 | _ -> model, Cmd.none
 
@@ -119,6 +124,10 @@ let private update msg model: Model * Cmd<Msg> =
             [ Cmd.map RegisterMsg registerCmd
               cmd ]
 
+    | SettingsMsg settingsMsg, Settings settingsModel ->
+        let settingsModel, settingsCmd = Pages.Settings.update settingsMsg settingsModel
+        { model with ActivePage = Settings settingsModel }, Cmd.map SettingsMsg settingsCmd
+
     | _ -> model, Cmd.none
 
 open Fable.React
@@ -150,8 +159,10 @@ let navbar isActiveRoute session =
                                              str " New Post" ] ]
                                  li [ ClassName "nav-item" ]
                                      [ a
-                                         [ ClassName "nav-link"
-                                           href <| SessionRoute Settings ]
+                                         [ classList
+                                             [ ("nav-link", true)
+                                               ("active", isActiveRoute <| SessionRoute SessionRoute.Settings) ]
+                                           href <| SessionRoute SessionRoute.Settings ]
                                            [ i [ ClassName "ion-gear-a" ] []
                                              str " Settings" ] ]
                                  li [ ClassName "nav-item" ]
@@ -181,6 +192,7 @@ let private rootView (model: Model) dispatch =
            | Article articleModel -> Pages.Article.view (ArticleMsg >> dispatch) articleModel
            | Login loginModel -> Pages.Login.view (LoginMsg >> dispatch) loginModel
            | Register registerModel -> Pages.Register.view (RegisterMsg >> dispatch) registerModel
+           | Settings settingsModel -> Pages.Settings.view (SettingsMsg >> dispatch) settingsModel
            | Loading -> div [] [ str "Loading" ]
            | NotFound -> div [] [ str "404" ]) ]
 
