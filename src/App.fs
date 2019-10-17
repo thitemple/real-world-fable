@@ -1,7 +1,10 @@
 module App
 
 open Elmish
+open Thoth.Json
+
 open Shared.Router
+open Shared.Types
 
 type Page =
     | NotFound
@@ -16,6 +19,7 @@ type Msg =
     | ArticleMsg of Pages.Article.Msg
     | LoginMsg of Pages.Login.Msg
     | RegisterMsg of Pages.Register.Msg
+    | NoOp
 
 type Model =
     { CurrentRoute: Route option
@@ -29,26 +33,49 @@ let private setRoute result model =
     | None -> { model with ActivePage = NotFound }, Cmd.none
     | Some route ->
         match route with
+        | SessionRoute sessionRoute ->
+            match model.Session with
+            | None -> model, newUrl Route.Login
+            | Some _ ->
+                match sessionRoute with
+                | Logout ->
+                    { model with Session = None },
+                    Cmd.batch
+                        [ newUrl <| Route.Article ArticlesList
+                          Cmd.OfFunc.perform (fun _ -> Browser.WebStorage.localStorage.removeItem ("session")) ()
+                              (fun _ -> NoOp) ]
+                // TODO: other secure pages
+                | _ -> model, Cmd.none
+
         | Route.Article(ArticlesList) ->
             let articlesModel, articlesCmd = Pages.Articles.init()
             { model with ActivePage = Articles articlesModel }, Cmd.map ArticlesMsg articlesCmd
+
         | Route.Article(ArticleRoute.Article slug) ->
             let articleModel, articleCmd = Pages.Article.init slug
             { model with ActivePage = Article articleModel }, Cmd.map ArticleMsg articleCmd
+
         | Route.Login ->
             let loginModel, loginCmd = Pages.Login.init()
             { model with ActivePage = Login loginModel }, Cmd.map LoginMsg loginCmd
+
         | Route.Register ->
             let registerModel, registerCmd = Pages.Register.init()
             { model with ActivePage = Register registerModel }, Cmd.map RegisterMsg registerCmd
 
-let private init (route: Route option): Model * Cmd<Msg> =
+let private init session (route: Route option): Model * Cmd<Msg> =
     { CurrentRoute = None
       ActivePage = Loading
-      Session = None }
+      Session = session }
     |> setRoute route
 
 let private update msg model: Model * Cmd<Msg> =
+
+    let saveSession (session: Session) =
+        Cmd.OfFunc.perform (fun s ->
+            let sessionStr = Encode.Auto.toString (0, s, isCamelCase = true)
+            Browser.WebStorage.localStorage.setItem ("session", sessionStr)) session (fun _ -> NoOp)
+
     match msg, model.ActivePage with
     | ArticlesMsg articlesMsg, Articles articlesModel ->
         let articlesModel, articlesCmd = Pages.Articles.update articlesMsg articlesModel
@@ -59,22 +86,38 @@ let private update msg model: Model * Cmd<Msg> =
         { model with ActivePage = Article articleModel }, Cmd.map ArticleMsg articleCmd
 
     | LoginMsg loginMsg, Login loginModel ->
-        let loginModel, loginCmd = Pages.Login.update loginMsg loginModel
-        { model with ActivePage = Login loginModel }, Cmd.map LoginMsg loginCmd
+        let loginModel, loginCmd, externalMsg = Pages.Login.update loginMsg loginModel
+
+        let (model, cmd) =
+            match externalMsg with
+            | Pages.Login.ExternalMsg.NoOp -> model, Cmd.none
+            | Pages.Login.ExternalMsg.SignedIn session ->
+                { model with Session = Some session },
+                Cmd.batch
+                    [ Route.Article ArticlesList |> newUrl
+                      saveSession session ]
+
+        { model with ActivePage = Login loginModel },
+        Cmd.batch
+            [ Cmd.map LoginMsg loginCmd
+              cmd ]
 
     | RegisterMsg registerMsg, Register registerModel ->
         let registerModel, registerCmd, externalMsg = Pages.Register.update registerMsg registerModel
 
-        let (model, externalCmd) =
+        let (model, cmd) =
             match externalMsg with
             | Pages.Register.ExternalMsg.NoOp -> model, Cmd.none
             | Pages.Register.ExternalMsg.UserCreated session ->
-                { model with Session = Some session }, Route.Article ArticlesList |> newUrl
+                { model with Session = Some session },
+                Cmd.batch
+                    [ Route.Article ArticlesList |> newUrl
+                      saveSession session ]
 
         { model with ActivePage = Register registerModel },
         Cmd.batch
             [ Cmd.map RegisterMsg registerCmd
-              externalCmd ]
+              cmd ]
 
     | _ -> model, Cmd.none
 
@@ -100,13 +143,21 @@ let navbar isActiveRoute session =
                        | Some _ ->
                            fragment []
                                [ li [ ClassName "nav-item" ]
-                                     [ a [ ClassName "nav-link" ]
+                                     [ a
+                                         [ ClassName "nav-link"
+                                           href <| SessionRoute NewPost ]
                                            [ i [ ClassName "ion-compose" ] []
                                              str " New Post" ] ]
                                  li [ ClassName "nav-item" ]
-                                     [ a [ ClassName "nav-link" ]
+                                     [ a
+                                         [ ClassName "nav-link"
+                                           href <| SessionRoute Settings ]
                                            [ i [ ClassName "ion-gear-a" ] []
-                                             str " Settings" ] ] ]
+                                             str " Settings" ] ]
+                                 li [ ClassName "nav-item" ]
+                                     [ a
+                                         [ ClassName "nav-link"
+                                           href <| SessionRoute Logout ] [ str " Sign out" ] ] ]
                        | None ->
                            fragment []
                                [ li [ ClassName "nav-item" ]
@@ -137,7 +188,18 @@ open Elmish.HMR
 open Elmish.UrlParser
 open Elmish.Navigation
 
-Program.mkProgram init update rootView
+let private tryGetSessionFromLocalStorage =
+    Browser.WebStorage.localStorage.getItem "session"
+    |> Option.ofObj
+    |> Option.bind (fun sessionStr ->
+        Decode.fromString Session.Decoder sessionStr
+        |> fun res ->
+            match res with
+            | Ok session -> Some session
+            | Error _ -> None)
+
+
+Program.mkProgram (init tryGetSessionFromLocalStorage) update rootView
 |> Program.toNavigable (parseHash pageParser) setRoute
 |> Program.withReactSynchronous "real-world-fable-app"
 |> Program.withConsoleTrace

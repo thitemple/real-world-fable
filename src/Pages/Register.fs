@@ -25,7 +25,7 @@ type Msg =
     | SetEmail of string
     | SetPassword of string
     | Submit
-    | HandleCreateResponse of RemoteData<Map<string, string list>, User * Session>
+    | HandleCreateResponse of RemoteData<Map<string, string list>, Session>
 
 let init(): Model * Cmd<Msg> =
     { Username = ""
@@ -47,7 +47,7 @@ let update (msg: Msg) (model: Model) =
     | HandleCreateResponse data ->
         match data with
         | Failure err -> { model with Errors = Map.toList err }, Cmd.none, NoOp
-        | Success(_, session) -> model, Cmd.none, UserCreated session
+        | Success(session) -> model, Cmd.none, UserCreated session
         | _ -> model, Cmd.none, NoOp
 
 let view dispatch model =

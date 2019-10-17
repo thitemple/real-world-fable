@@ -91,10 +91,26 @@ module Users =
                 | Ok p -> return Failure p
                 | Error e -> return Failure(Map.ofList [ "Decoding error", [ e ] ])
             else
-                let decodedUser = Decode.fromString User.Decoder responseText
-                let decodedSession = Decode.fromString (Session.Decoder createUser.username) responseText
-                match decodedUser, decodedSession with
-                | Ok user, Ok session -> return Success(user, session)
-                | Error userError, _ -> return Failure(Map.ofList [ "Decoding error", [ userError ] ])
-                | _, Error sessionError -> return Failure(Map.ofList [ "Decoding error", [ sessionError ] ])
+                let decodedSession = Decode.fromString Session.Decoder responseText
+                match decodedSession with
+                | Ok session -> return Success(session)
+                | Error e -> return Failure(Map.ofList [ "Decoding error", [ e ] ])
+        }
+
+    let login (credentials: {| email: string; password: string |}) =
+        let url = sprintf "%slogin/" usersBaseUrl
+        async {
+            let! (statusCode, responseText) = post url {| user = credentials |}
+
+            if statusCode = 200 then
+                let decodedSession = Decode.fromString Session.Decoder responseText
+                match decodedSession with
+                | Ok session -> return Success(session)
+                | Error e -> return Failure(Map.ofList [ "Decoding error", [ e ] ])
+            else
+                let problems =
+                    Decode.fromString (Decode.at [ "errors" ] (Decode.dict (Decode.list Decode.string))) responseText
+                match problems with
+                | Ok p -> return Failure p
+                | Error e -> return Failure(Map.ofList [ "Decoding error", [ e ] ])
         }

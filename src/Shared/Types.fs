@@ -3,16 +3,6 @@ module Shared.Types
 open System
 open Thoth.Json
 
-type Session =
-    { Username: string
-      Token: string }
-
-    static member Decoder username: Decoder<Session> =
-        Decode.object <| fun get ->
-            { Username = username
-              Token = get.Required.At [ "user"; "token" ] Decode.string }
-
-
 type User =
     { Id: int
       Username: string
@@ -27,6 +17,19 @@ type User =
               Email = get.Required.At [ "user"; "email" ] Decode.string
               Bio = get.Optional.At [ "user"; "bio" ] Decode.string
               Image = get.Optional.At [ "user"; "image" ] Decode.string }
+
+type Session =
+    { Username: string
+      Token: string }
+
+    static member Decoder: Decoder<Session> =
+        Decode.oneOf
+            [ Decode.object <| fun get ->
+                { Username = get.Required.At [ "user"; "username" ] Decode.string
+                  Token = get.Required.At [ "user"; "token" ] Decode.string }
+              Decode.object <| fun get ->
+                  { Username = get.Required.Field "username" Decode.string
+                    Token = get.Required.Field "token" Decode.string } ]
 
 type Author =
     { Username: string

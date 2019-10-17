@@ -1,3 +1,9 @@
+## 13 - Login
+- Logs in a user
+- Saves session in local storage
+- Logout
+- Secured routes
+
 ## 12 - Creates a new user
 - Switches to use Fable.SimpleHttp
 - Creates a new user
