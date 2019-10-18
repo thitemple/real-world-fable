@@ -91,11 +91,11 @@ module Users =
         let url = sprintf "%slogin/" usersBaseUrl
         post url (Decode.field "user" Session.Decoder) {| user = credentials |}
 
-    let fetchUserWithDecoder (decoder: Decoder<'a>) (session: Session) =
+    let fetchUserWithDecoder decoder session =
         let url = sprintf "%suser/" baseUrl
         safeGet url (Decode.field "user" decoder) session
 
-    let fetchUser (session: Session) = async { return! fetchUserWithDecoder User.User.Decoder session }
+    let fetchUser session = fetchUserWithDecoder User.User.Decoder session
 
     let updateUser session (validatedUser: User.ValidatedUser) password =
         let url = sprintf "%suser/" baseUrl

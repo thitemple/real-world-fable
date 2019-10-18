@@ -29,7 +29,7 @@ type Msg =
 
 let fetchUser session = Cmd.OfAsync.perform Users.fetchUser session UserFetched
 
-let init session: Model * Cmd<Msg> =
+let init session =
     { Session = session
       Password = ""
       User = Loading
@@ -41,7 +41,7 @@ let updateForm transform model =
     | Success formData -> { model with User = Success <| transform formData }, Cmd.none
     | _ -> model, Cmd.none
 
-let update (msg: Msg) (model: Model) =
+let update msg model =
     match msg with
     | UserFetched data -> { model with User = data }, Cmd.none
     | SetImage image ->
