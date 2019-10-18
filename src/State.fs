@@ -6,6 +6,9 @@ open Thoth.Json
 open Router
 open Types
 
+
+// TYPES
+
 type Page =
     | NotFound
     | Loading
@@ -29,6 +32,9 @@ type Model =
     { CurrentRoute: Route option
       ActivePage: Page
       Session: Types.Session option }
+
+
+// STATE
 
 let setSessionRoute sessionRoute model =
     match model.Session with
@@ -108,7 +114,6 @@ let update msg model: Model * Cmd<Msg> =
         | _ -> model, Cmd.none
 
     | LoginMsg loginMsg ->
-
         match model.ActivePage with
         | Login loginModel ->
 
@@ -132,7 +137,6 @@ let update msg model: Model * Cmd<Msg> =
         | _ -> model, Cmd.none
 
     | RegisterMsg registerMsg ->
-
         match model.ActivePage with
         | Register registerModel ->
             let registerModel, registerCmd, externalMsg = Pages.Register.update registerMsg registerModel
@@ -155,23 +159,19 @@ let update msg model: Model * Cmd<Msg> =
         | _ -> model, Cmd.none
 
     | SettingsMsg settingsMsg ->
-
         match model.ActivePage with
         | Settings settingsModel ->
             let settingsModel, settingsCmd = Pages.Settings.update settingsMsg settingsModel
-
             { model with ActivePage = Settings settingsModel }, Cmd.map SettingsMsg settingsCmd
 
         | _ -> model, Cmd.none
 
     | NewPostMsg newPostMsg ->
-
         match model.ActivePage with
         | NewPost newPostModel ->
             let newPostModel, newPostCmd = Pages.NewPost.update newPostMsg newPostModel
-
             { model with ActivePage = NewPost newPostModel }, Cmd.map NewPostMsg newPostCmd
 
         | _ -> model, Cmd.none
 
-    | _ -> model, Cmd.none
+    | NoOp -> model, Cmd.none
