@@ -9,18 +9,16 @@ open Shared.Types
 open Shared.Api
 
 type Model =
-    { Article: RemoteData<exn, Article>
-      Comments: RemoteData<exn, Comment list> }
+    { Article: RemoteData<string list, Article>
+      Comments: RemoteData<string list, Comment list> }
 
 type Msg =
-    | ArticleFetched of RemoteData<exn, Article>
-    | CommentsFetched of RemoteData<exn, Comment list>
+    | ArticleFetched of RemoteData<string list, Article>
+    | CommentsFetched of RemoteData<string list, Comment list>
 
-let private fetchArticle slug =
-    Cmd.OfAsync.perform Articles.fetchArticle slug ArticleFetched
+let private fetchArticle slug = Cmd.OfAsync.perform Articles.fetchArticle slug ArticleFetched
 
-let private fetchComments slug =
-    Cmd.OfAsync.perform Articles.fetchComments slug CommentsFetched
+let private fetchComments slug = Cmd.OfAsync.perform Articles.fetchComments slug CommentsFetched
 
 let init slug =
     { Article = Loading

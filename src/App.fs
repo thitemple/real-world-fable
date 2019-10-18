@@ -14,6 +14,7 @@ type Page =
     | Articles of Pages.Articles.Model
     | Article of Pages.Article.Model
     | Settings of Pages.Settings.Model
+    | NewPost of Pages.NewPost.Model
 
 type Msg =
     | ArticlesMsg of Pages.Articles.Msg
@@ -21,6 +22,7 @@ type Msg =
     | LoginMsg of Pages.Login.Msg
     | RegisterMsg of Pages.Register.Msg
     | SettingsMsg of Pages.Settings.Msg
+    | NewPostMsg of Pages.NewPost.Msg
     | NoOp
 
 type Model =
@@ -46,11 +48,14 @@ let private setRoute result model =
                         [ newUrl <| Route.Article ArticlesList
                           Cmd.OfFunc.perform (fun _ -> Browser.WebStorage.localStorage.removeItem ("session")) ()
                               (fun _ -> NoOp) ]
+
                 | SessionRoute.Settings ->
                     let settingsModel, settingsCmd = Pages.Settings.init session
                     { model with ActivePage = Settings settingsModel }, Cmd.map SettingsMsg settingsCmd
-                // TODO: other secure pages
-                | _ -> model, Cmd.none
+
+                | SessionRoute.NewPost ->
+                    let newPostModel, newPostCmd = Pages.NewPost.init()
+                    { model with ActivePage = NewPost newPostModel }, Cmd.map NewPostMsg newPostCmd
 
         | Route.Article(ArticlesList) ->
             let articlesModel, articlesCmd = Pages.Articles.init()
@@ -128,6 +133,10 @@ let private update msg model: Model * Cmd<Msg> =
         let settingsModel, settingsCmd = Pages.Settings.update settingsMsg settingsModel
         { model with ActivePage = Settings settingsModel }, Cmd.map SettingsMsg settingsCmd
 
+    | NewPostMsg newPostMsg, NewPost newPostModel ->
+        let newPostModel, newPostCmd = Pages.NewPost.update newPostMsg newPostModel
+        { model with ActivePage = NewPost newPostModel }, Cmd.map NewPostMsg newPostCmd
+
     | _ -> model, Cmd.none
 
 open Fable.React
@@ -153,8 +162,8 @@ let navbar isActiveRoute session =
                            fragment []
                                [ li [ ClassName "nav-item" ]
                                      [ a
-                                         [ ClassName "nav-link"
-                                           href <| SessionRoute NewPost ]
+                                         [ classList [ ("nav-link", true); ("active", isActiveRoute <| SessionRoute SessionRoute.NewPost) ]
+                                           href <| SessionRoute SessionRoute.NewPost ]
                                            [ i [ ClassName "ion-compose" ] []
                                              str " New Post" ] ]
                                  li [ ClassName "nav-item" ]
@@ -193,6 +202,7 @@ let private rootView (model: Model) dispatch =
            | Login loginModel -> Pages.Login.view (LoginMsg >> dispatch) loginModel
            | Register registerModel -> Pages.Register.view (RegisterMsg >> dispatch) registerModel
            | Settings settingsModel -> Pages.Settings.view (SettingsMsg >> dispatch) settingsModel
+           | NewPost newPostModel -> Pages.NewPost.view (NewPostMsg >> dispatch) newPostModel
            | Loading -> div [] [ str "Loading" ]
            | NotFound -> div [] [ str "404" ]) ]
 
@@ -203,12 +213,7 @@ open Elmish.Navigation
 let private tryGetSessionFromLocalStorage =
     Browser.WebStorage.localStorage.getItem "session"
     |> Option.ofObj
-    |> Option.bind (fun sessionStr ->
-        Decode.fromString Session.Decoder sessionStr
-        |> fun res ->
-            match res with
-            | Ok session -> Some session
-            | Error _ -> None)
+    |> Option.bind (fun sessionStr -> Decode.fromString Session.Decoder sessionStr |> Result.toOption)
 
 
 Program.mkProgram (init tryGetSessionFromLocalStorage) update rootView

@@ -3,6 +3,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Shared/Result.fs" />
     <Compile Include="Shared/Router.fs" />
     <Compile Include="Shared/Types.fs" />
     <Compile Include="Shared/Api.fs" />
@@ -11,6 +12,7 @@
     <Compile Include="Pages/Login.fs" />
     <Compile Include="Pages/Register.fs" />
     <Compile Include="Pages/Settings.fs" />
+    <Compile Include="Pages/NewPost.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>
   <ItemGroup>

@@ -3,20 +3,52 @@ module Shared.Types
 open System
 open Thoth.Json
 
-type User =
-    { Id: int
-      Username: string
-      Email: string
-      Bio: string option
-      Image: string option }
+module Validate =
+    let isEmpty errorMsg get value =
+        if String.IsNullOrWhiteSpace <| get value then Error errorMsg
+        else Ok value
 
-    static member Decoder: Decoder<User> =
-        Decode.object <| fun get ->
-            { Id = get.Required.Field "id" Decode.int
-              Username = get.Required.Field "username" Decode.string
-              Email = get.Required.Field "email" Decode.string
-              Bio = get.Optional.Field "bio" Decode.string
-              Image = get.Optional.Field "image" Decode.string }
+module User =
+
+    type User =
+        { Username: string
+          Email: string
+          Bio: string option
+          Image: string option }
+
+        static member Decoder: Decoder<User> =
+            Decode.object <| fun get ->
+                { Username = get.Required.Field "username" Decode.string
+                  Email = get.Required.Field "email" Decode.string
+                  Bio = get.Optional.Field "bio" Decode.string
+                  Image = get.Optional.Field "image" Decode.string }
+
+    type ValidatedUser = private ValidatedUser of User
+
+    let validatedToJsonValue (ValidatedUser user) (password: string): Thoth.Json.JsonValue =
+        Encode.object
+            [ "username", Encode.string user.Username
+              "email", Encode.string user.Email
+              "bio", Option.map Encode.string user.Bio |> Option.defaultValue Encode.nil
+              "image", Option.map Encode.string user.Image |> Option.defaultValue Encode.nil
+              "password",
+              (if String.IsNullOrWhiteSpace password then Encode.nil
+               else Encode.string password) ]
+
+    let validateUser (user: User) =
+
+        let isUsernameEmpty user = Validate.isEmpty "username can't be blank" (fun u -> u.Username) user
+        let isEmailEmpty user = Validate.isEmpty "email can't be blank" (fun u -> u.Email) user
+
+        let isValidEmail user =
+            if String.exists (fun c -> c = '@') user.Email then Ok user
+            else Error "email must have a '@'"
+
+        user
+        |> isUsernameEmpty
+        |> Result.bind isEmailEmpty
+        |> Result.bind isValidEmail
+        |> Result.map ValidatedUser
 
 type Session =
     { Username: string
@@ -73,6 +105,11 @@ type Article =
 type ArticlesList =
     { Articles: Article list
       ArticlesCount: int }
+
+    static member Decoder: Decoder<ArticlesList> =
+        Decode.object <| fun get ->
+            { Articles = get.Required.Field "articles" (Decode.list Article.Decoder)
+              ArticlesCount = get.Required.Field "articlesCount" Decode.int }
 
 type Comment =
     { Id: int

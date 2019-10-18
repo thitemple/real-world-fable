@@ -22,7 +22,14 @@
     "type": "git",
     "url": "git+https://github.com/thitemple/realworld-fsharp-fable.git"
   },
-  "keywords": [],
+  "keywords": [
+    "F#",
+    "fsharp",
+    "fable",
+    "elmish",
+    "react",
+    "real world"
+  ],
   "author": "",
   "license": "ISC",
   "bugs": {

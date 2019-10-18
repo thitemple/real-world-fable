@@ -9,12 +9,10 @@ open Shared.Router
 open Shared.Types
 open Shared.Api
 
-type Errors = (string * string list) list
-
 type Model =
     { Email: string
       Password: string
-      Errors: Errors }
+      Errors: string list }
 
 type ExternalMsg =
     | NoOp
@@ -24,7 +22,7 @@ type Msg =
     | SetEmail of string
     | SetPassword of string
     | Submit
-    | HandleLoginResponse of RemoteData<Map<string, string list>, Session>
+    | HandleLoginResponse of RemoteData<string list, Session>
 
 let init(): Model * Cmd<Msg> =
     { Email = ""
@@ -45,7 +43,7 @@ let update (msg: Msg) (model: Model) =
 
     | HandleLoginResponse res ->
         match res with
-        | Failure err -> { model with Errors = Map.toList err }, Cmd.none, NoOp
+        | Failure err -> { model with Errors = err }, Cmd.none, NoOp
         | Success(session) -> model, Cmd.none, SignedIn session
         | _ -> model, Cmd.none, NoOp
 
@@ -58,9 +56,7 @@ let view dispatch model =
                           [ h1 [ ClassName "text-xs-center" ] [ str "Sign in" ]
                             p [ ClassName "text-xs-center" ] [ a [ href Register ] [ str "Need an account?" ] ]
 
-                            ul [ ClassName "error-messages" ]
-                                (List.map (fun (key, err) -> li [] [ str <| sprintf "%s %s" key (List.head err) ])
-                                     model.Errors)
+                            ul [ ClassName "error-messages" ] (List.map (fun err -> li [] [ str err ]) model.Errors)
 
                             form [ OnSubmit(fun _ -> dispatch Submit) ]
                                 [ fieldset [ ClassName "form-group" ]

@@ -5,12 +5,12 @@
 /bower_components
 
 # IDEs and editors
-/.idea
+.idea
 .project
 .classpath
 *.launch
 .settings
-.ionide/
+.ionide
 
 #System Files
 .DS_Store

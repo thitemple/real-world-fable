@@ -8,135 +8,96 @@ open Shared.Types
 
 let private baseUrl = "https://conduit.productionready.io/api/"
 
-let private post url data =
+let BadRequestErrorDecoder str =
+    str
+    |> Decode.at [ "errors" ]
+           (Decode.dict (Decode.list Decode.string)
+            |> Decode.andThen
+                (Map.toList
+                 >> List.collect (fun (key, errors) -> List.map (fun e -> sprintf "%s %s" key e) errors)
+                 >> Decode.succeed))
 
-    let data = Encode.toString 0 data
-
+let makeRequest method body url decoder session =
     async {
-        let! response = Http.request url
-                        |> Http.method POST
-                        |> Http.content (BodyContent.Text data)
-                        |> Http.header (Headers.contentType "application/json")
-                        |> Http.send
-        return response.statusCode, response.responseText
+        let request = Http.request url |> Http.method method
+
+        let request =
+            session
+            |> Option.map (fun s -> Http.header (Headers.authorization <| sprintf "Token %s" s.Token) request)
+            |> Option.defaultValue request
+
+        let request =
+            body
+            |> Option.map
+                (fun b ->
+                Http.content (BodyContent.Text b) request |> Http.header (Headers.contentType "application/json"))
+            |> Option.defaultValue request
+
+        let! response = Http.send request
+
+        if response.statusCode = 200 then
+            let decodedUser = Decode.fromString decoder response.responseText
+            match decodedUser with
+            | Ok user -> return Success user
+            | Error e -> return Failure [ e ]
+        elif response.statusCode = 422 then
+            let decodedErrors = Decode.fromString BadRequestErrorDecoder response.responseText
+            match decodedErrors with
+            | Ok errors -> return Failure errors
+            | Error e -> return Failure [ e ]
+        else
+            return Failure [ response.responseText ]
     }
 
-let private safeGet url session =
+let private safeGet url decoder session = makeRequest GET None url decoder (Some session)
+let private safePut (body: JsonValue) url decoder session =
+    makeRequest PUT (Some <| Encode.toString 0 body) url decoder (Some session)
 
-    async {
-        let! response = Http.request url
-                        |> Http.method GET
-                        |> Http.header (Headers.authorization <| sprintf "Token %s" session.Token)
-                        |> Http.send
-        return response.statusCode, response.responseText
-    }
-
+let private get url decoder = makeRequest GET None url decoder None
+let private post url decoder body = makeRequest POST (Some <| Encode.toString 0 body) url decoder None
 
 module Articles =
 
     let articlesBaseUrl = sprintf "%sarticles/" baseUrl
 
     let fetchArticles offset =
-        async {
-            let! (statusCode, responseText) = Http.get <| sprintf "%s?limit=10&offset=%i" articlesBaseUrl offset
-            if statusCode = 200 then
-                let result = Decode.Auto.fromString<ArticlesList> (responseText, isCamelCase = true)
-                match result with
-                | Ok data -> return Success data
-                | Error err -> return Failure <| exn err
-            else
-                return Failure <| exn responseText
-        }
+        let url = sprintf "%s?limit=10&offset=%i" articlesBaseUrl offset
+        get url ArticlesList.Decoder
 
     let fetchArticle slug =
-        async {
-            let! (statusCode, responseText) = Http.get <| sprintf "%s/%s" articlesBaseUrl slug
-            if statusCode = 200 then
-                let result = Decode.fromString (Decode.field "article" Article.Decoder) responseText
-                match result with
-                | Ok data -> return Success data
-                | Error err -> return Failure <| exn err
-            else
-                return Failure <| exn responseText
-        }
+        let url = sprintf "%s/%s" articlesBaseUrl slug
+        get url (Decode.field "article" Article.Decoder)
 
     let fetchComments slug =
-        async {
-            let! (statusCode, responseText) = Http.get <| sprintf "%s/%s/comments" articlesBaseUrl slug
-            if statusCode = 200 then
-                let result = Decode.fromString Comment.DecoderList responseText
-                match result with
-                | Ok data -> return Success data
-                | Error err -> return Failure <| exn err
-            else
-                return Failure <| exn responseText
-        }
+        let url = sprintf "%s/%s/comments" articlesBaseUrl slug
+        get url Comment.DecoderList
 
 module Tags =
 
     let fetchTags() =
-        async {
-            let! (statusCode, responseText) = Http.get <| sprintf "%stags" baseUrl
-            if statusCode = 200 then
-                let result = Decode.fromString Tag.ListDecoder responseText
-                match result with
-                | Ok data -> return Success data
-                | Error err -> return Failure <| exn err
-            else
-                return Failure <| exn responseText
-        }
+        let url = sprintf "%stags" baseUrl
+        get url Tag.ListDecoder
 
 module Users =
 
     let usersBaseUrl = sprintf "%susers/" baseUrl
 
     let createUser (createUser: {| username: string; email: string; password: string |}) =
-        async {
-            let! (statusCode, responseText) = post usersBaseUrl {| user = createUser |}
-
-            if statusCode >= 400 then
-                let problems =
-                    Decode.fromString (Decode.at [ "errors" ] (Decode.dict (Decode.list Decode.string))) responseText
-                match problems with
-                | Ok p -> return Failure p
-                | Error e -> return Failure(Map.ofList [ "Decoding error", [ e ] ])
-            else
-                let decodedSession = Decode.fromString (Decode.field "user" Session.Decoder) responseText
-                match decodedSession with
-                | Ok session -> return Success(session)
-                | Error e -> return Failure(Map.ofList [ "Decoding error", [ e ] ])
-        }
+        post usersBaseUrl (Decode.field "user" Session.Decoder) {| user = createUser |}
 
     let login (credentials: {| email: string; password: string |}) =
         let url = sprintf "%slogin/" usersBaseUrl
-        async {
-            let! (statusCode, responseText) = post url {| user = credentials |}
-
-            if statusCode = 200 then
-                let decodedSession = Decode.fromString (Decode.field "user" Session.Decoder) responseText
-                match decodedSession with
-                | Ok session -> return Success(session)
-                | Error e -> return Failure(Map.ofList [ "Decoding error", [ e ] ])
-            else
-                let problems =
-                    Decode.fromString (Decode.at [ "errors" ] (Decode.dict (Decode.list Decode.string))) responseText
-                match problems with
-                | Ok p -> return Failure p
-                | Error e -> return Failure(Map.ofList [ "Decoding error", [ e ] ])
-        }
+        post url (Decode.field "user" Session.Decoder) {| user = credentials |}
 
     let fetchUserWithDecoder (decoder: Decoder<'a>) (session: Session) =
         let url = sprintf "%suser/" baseUrl
-        async {
-            let! (statusCode, responseText) = safeGet url session
+        async { return! safeGet url (Decode.field "user" decoder) session }
 
-            if statusCode = 200 then
-                let decodedUser = Decode.fromString (Decode.field "user" decoder) responseText
-                match decodedUser with
-                | Ok user -> return Success user
-                | Error e -> return Failure <| exn e
-            else
-                return Failure <| exn responseText
-        }
+    let fetchUser (session: Session) = async { return! fetchUserWithDecoder User.User.Decoder session }
 
-    let fetchUser (session: Session) = async { return! fetchUserWithDecoder User.Decoder session }
+    let updateUser session (validatedUser: User.ValidatedUser) password =
+        let url = sprintf "%suser/" baseUrl
+        async
+            {
+            return! safePut (User.validatedToJsonValue validatedUser password) url
+                        (Decode.field "user" User.User.Decoder) session }

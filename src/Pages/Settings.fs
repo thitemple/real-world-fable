@@ -1,96 +1,118 @@
 module Pages.Settings
 
+open System
 open Elmish
 open Fable.React
 open Fable.React.Props
 open Fable.RemoteData
-open Thoth.Json
 
 open Shared.Types
+open Shared.Router
+open Shared.Types.User
 open Shared.Api
-
-type FormData =
-    { Avatar: string
-      Bio: string
-      Email: string
-      Username: string
-      Password: string }
 
 type Model =
     { Session: Session
-      FormData: RemoteData<exn, FormData> }
+      Password: string
+      User: RemoteData<string list, User>
+      Errors: string list }
 
 type Msg =
-    | FormLoaded of RemoteData<exn, FormData>
-    | SetAvatar of string
+    | UserFetched of RemoteData<string list, User>
+    | UserSaved of RemoteData<string list, User>
+    | SetImage of string
     | SetBio of string
     | SetUsername of string
     | SetEmail of string
     | SetPassword of string
+    | Submit
 
-let FormDecoder: Decoder<FormData> =
-    Decode.object <| fun get ->
-        { Avatar = get.Optional.Field "image" Decode.string |> Option.defaultValue ""
-          Bio = get.Optional.Field "bio" Decode.string |> Option.defaultValue ""
-          Email = get.Required.Field "email" Decode.string
-          Username = get.Required.Field "username" Decode.string
-          Password = "" }
-
-let fetchUser session = Cmd.OfAsync.perform (Users.fetchUserWithDecoder FormDecoder) session FormLoaded
+let fetchUser session = Cmd.OfAsync.perform Users.fetchUser session UserFetched
 
 let init session: Model * Cmd<Msg> =
     { Session = session
-      FormData = Loading }, fetchUser session
+      Password = ""
+      User = Loading
+      Errors = [] }, fetchUser session
+
 
 let updateForm transform model =
-    match model.FormData with
-    | Success formData -> { model with FormData = Success <| transform formData }, Cmd.none
+    match model.User with
+    | Success formData -> { model with User = Success <| transform formData }, Cmd.none
     | _ -> model, Cmd.none
 
 let update (msg: Msg) (model: Model) =
     match msg with
-    | FormLoaded data -> { model with FormData = data }, Cmd.none
-    | SetAvatar avatar -> updateForm (fun formData -> { formData with Avatar = avatar }) model
-    | SetBio bio -> updateForm (fun formData -> { formData with Bio = bio }) model
+    | UserFetched data -> { model with User = data }, Cmd.none
+    | SetImage image ->
+        updateForm (fun formData ->
+            { formData with
+                  Image =
+                      if String.IsNullOrWhiteSpace image then None
+                      else Some image }) model
+    | SetBio bio ->
+        updateForm (fun formData ->
+            { formData with
+                  Bio =
+                      if String.IsNullOrWhiteSpace bio then None
+                      else Some bio }) model
     | SetUsername username -> updateForm (fun formData -> { formData with Username = username }) model
     | SetEmail email -> updateForm (fun formData -> { formData with Email = email }) model
-    | SetPassword password -> updateForm (fun formData -> { formData with Password = password }) model
+    | SetPassword password -> { model with Password = password }, Cmd.none
+    | Submit ->
 
-let form dispatch (formData: FormData) =
-    form []
+        match model.User with
+        | Success user ->
+            let result = validateUser user
+
+            match result with
+            | Ok validatedUser ->
+                model, Cmd.OfAsync.perform (Users.updateUser model.Session validatedUser) model.Password UserSaved
+            | Error err -> { model with Errors = [ err ] }, Cmd.none
+
+        | _ -> model, Cmd.none
+
+    | UserSaved(Success _) -> model, Article ArticlesList |> newUrl
+
+    | UserSaved(Failure e) -> { model with Errors = e }, Cmd.none
+
+    | UserSaved _ -> model, Cmd.none
+
+let form dispatch (user: User) password =
+    form [ OnSubmit(fun _ -> dispatch Submit) ]
         [ fieldset [ ClassName "form-group" ]
               [ input
                   [ ClassName "form-control"
                     Type "text"
-                    Value formData.Avatar
-                    OnChange(fun ev -> dispatch <| SetAvatar ev.Value)
+                    Value user.Image
+                    OnChange(fun ev -> dispatch <| SetImage ev.Value)
                     Placeholder "URL of profile picture" ] ]
           fieldset [ ClassName "form-group" ]
               [ input
                   [ ClassName "form-control form-control-lg"
                     Type "text"
-                    Value formData.Username
+                    Value user.Username
                     OnChange(fun ev -> dispatch <| SetUsername ev.Value)
                     Placeholder "Your Name" ] ]
           fieldset [ ClassName "form-group" ]
               [ textarea
                   [ ClassName "form-control form-control-lg"
                     Rows 8
-                    Value formData.Bio
+                    Value user.Bio
                     OnChange(fun ev -> dispatch <| SetBio ev.Value)
                     Placeholder "Short bio about you" ] [] ]
           fieldset [ ClassName "form-group" ]
               [ input
                   [ ClassName "form-control form-control-lg"
                     Type "text"
-                    Value formData.Email
+                    Value user.Email
                     OnChange(fun ev -> dispatch <| SetEmail ev.Value)
                     Placeholder "Email" ] ]
           fieldset [ ClassName "form-group" ]
               [ input
                   [ ClassName "form-control form-control-lg"
                     Type "password"
-                    Value formData.Password
+                    Value password
                     OnChange(fun ev -> dispatch <| SetPassword ev.Value)
                     Placeholder "Password" ] ]
           button [ ClassName "btn btn-lg btn-primary pull-xs-right" ] [ str "Update Settings" ] ]
@@ -101,6 +123,7 @@ let view dispatch (model: Model) =
               [ div [ ClassName "row" ]
                     [ div [ ClassName "col-md-6 offset-md-3 col-xs-12" ]
                           [ h1 [ ClassName "text-xs-center" ] [ str "Your Settings" ]
-                            (match model.FormData with
-                             | Success formData -> form dispatch formData
+                            ul [ ClassName "error-messages" ] (List.map (fun e -> li [] [ str e ]) model.Errors)
+                            (match model.User with
+                             | Success formData -> form dispatch formData model.Password
                              | _ -> str "") ] ] ] ]

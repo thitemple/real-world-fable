@@ -10,13 +10,13 @@ open Shared.Types
 open Shared.Api
 
 type Msg =
-    | ArticlesFetched of articles: RemoteData<exn, ArticlesList>
-    | TagsFetched of articles: RemoteData<exn, Tag list>
+    | ArticlesFetched of articles: RemoteData<string list, ArticlesList>
+    | TagsFetched of articles: RemoteData<string list, Tag list>
     | SetArticlesPage of int
 
 type Model =
-    { Articles: RemoteData<exn, ArticlesList>
-      PopularTags: RemoteData<exn, Tag list>
+    { Articles: RemoteData<string list, ArticlesList>
+      PopularTags: RemoteData<string list, Tag list>
       CurrentArticlesPage: int }
 
 let private fetchArticles page =

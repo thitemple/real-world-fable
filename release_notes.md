@@ -1,3 +1,8 @@
+## 14b - Save settings
+- Save settings
+- Major API refactor
+- Validates before saving an user
+
 ## 14a - Load settings data
 
 ## 13 - Login
