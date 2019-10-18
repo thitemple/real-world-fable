@@ -6,6 +6,7 @@ open Fable.React
 open Fable.React.Props
 
 open Router
+open Types.Article
 open Types
 open Api
 
@@ -73,7 +74,7 @@ let private article (article: Article) =
                       str <| sprintf " %i" article.FavoritesCount ] ]
           a
               [ ClassName "preview-link"
-                href (Article(ArticleRoute.Article article.Slug)) ]
+                href <| Article article.Slug ]
               [ h1 [] [ str article.Title ]
 
                 p [] [ str article.Description ]

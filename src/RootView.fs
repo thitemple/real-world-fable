@@ -15,8 +15,8 @@ let authenticatedMenuItems isActiveRoute =
               [ a
                   [ classList
                       [ ("nav-link", true)
-                        ("active", isActiveRoute <| SessionRoute SessionRoute.NewPost) ]
-                    href <| SessionRoute SessionRoute.NewPost ]
+                        ("active", isActiveRoute <| SessionRoute SessionRoute.NewArticle) ]
+                    href <| SessionRoute SessionRoute.NewArticle ]
                     [ i [ ClassName "ion-compose" ] []
 
                       str " New Post" ] ]
@@ -62,7 +62,7 @@ let private navbar isActiveRoute session =
         [ div [ ClassName "container" ]
               [ a
                   [ ClassName "navbar-brand"
-                    href <| Route.Article ArticlesList ] [ str "conduit" ]
+                    href Route.Articles ] [ str "conduit" ]
 
                 ul [ ClassName "nav navbar-nav pull-xs-right" ]
                     [ li [ ClassName "nav-item" ]
@@ -70,8 +70,8 @@ let private navbar isActiveRoute session =
                               [ ClassName "nav-link active"
                                 classList
                                     [ ("nav-link", true)
-                                      ("active", isActiveRoute <| Route.Article ArticlesList) ]
-                                href (Route.Article ArticlesList) ] [ str "Home" ] ]
+                                      ("active", isActiveRoute Route.Articles) ]
+                                href Route.Articles ] [ str "Home" ] ]
 
                       navbarItems isActiveRoute session ] ] ]
 
@@ -87,7 +87,7 @@ let private activePage dispatch activePage =
 
     | Settings settingsModel -> Pages.Settings.view (SettingsMsg >> dispatch) settingsModel
 
-    | NewPost newPostModel -> Pages.NewPost.view (NewPostMsg >> dispatch) newPostModel
+    | Editor editorModel -> Pages.Editor.view (EditorMsg >> dispatch) editorModel
 
     | Loading -> div [] [ str "Loading" ]
 

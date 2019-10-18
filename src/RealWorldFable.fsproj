@@ -21,7 +21,7 @@
     <Compile Include="Pages/Login.fs" />
     <Compile Include="Pages/Register.fs" />
     <Compile Include="Pages/Settings.fs" />
-    <Compile Include="Pages/NewPost.fs" />
+    <Compile Include="Pages/Editor.fs" />
     
     <!-- ROOT ITEMS -->
     <Compile Include="State.fs" />

@@ -4,36 +4,33 @@ open Elmish.UrlParser
 open Elmish.Navigation
 open Fable.React.Props
 
-type ArticleRoute =
-    | ArticlesList
-    | Article of string
-
 type SessionRoute =
     | Settings
-    | NewPost
+    | NewArticle
     | Logout
 
 type Route =
     | Login
     | Register
-    | Article of ArticleRoute
+    | Article of string
+    | Articles
     | SessionRoute of SessionRoute
 
 let pageParser: Parser<Route -> Route, Route> =
     oneOf
-        [ map (ArticleRoute.Article >> Article) (s "article" </> str)
-          map (ArticlesList |> Article) top
-          map (Login) (s "login")
-          map (Register) (s "register")
+        [ map Article (s "article" </> str)
+          map Articles top
+          map Login (s "login")
+          map Register (s "register")
           map (Settings |> SessionRoute) (s "settings")
-          map (NewPost |> SessionRoute) (s "editor")
+          map (NewArticle |> SessionRoute) (s "editor")
           map (Logout |> SessionRoute) (s "logout") ]
 
 let toHash route =
     match route with
-    | (Article ArticlesList) -> ""
+    | Articles -> ""
 
-    | Article(ArticleRoute.Article slug) -> sprintf "article/%s" slug
+    | Article slug -> sprintf "article/%s" slug
 
     | Login -> "login"
 
@@ -41,7 +38,7 @@ let toHash route =
 
     | SessionRoute Settings -> "settings"
 
-    | SessionRoute NewPost -> "editor"
+    | SessionRoute NewArticle -> "editor"
 
     | SessionRoute Logout -> "logout"
     |> (fun r -> sprintf "#/%s" r)

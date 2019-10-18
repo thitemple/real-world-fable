@@ -17,7 +17,7 @@ type Page =
     | Articles of Pages.Articles.Model
     | Article of Pages.Article.Model
     | Settings of Pages.Settings.Model
-    | NewPost of Pages.NewPost.Model
+    | Editor of Pages.Editor.Model
 
 type Msg =
     | ArticlesMsg of Pages.Articles.Msg
@@ -25,7 +25,7 @@ type Msg =
     | LoginMsg of Pages.Login.Msg
     | RegisterMsg of Pages.Register.Msg
     | SettingsMsg of Pages.Settings.Msg
-    | NewPostMsg of Pages.NewPost.Msg
+    | EditorMsg of Pages.Editor.Msg
     | NoOp
 
 type Model =
@@ -45,7 +45,7 @@ let setSessionRoute sessionRoute model =
         | Logout ->
             { model with Session = None },
             Cmd.batch
-                [ newUrl <| Route.Article ArticlesList
+                [ newUrl Route.Articles
                   Cmd.OfFunc.perform (fun _ -> Browser.WebStorage.localStorage.removeItem ("session")) ()
                       (fun _ -> NoOp) ]
 
@@ -53,9 +53,9 @@ let setSessionRoute sessionRoute model =
             let settingsModel, settingsCmd = Pages.Settings.init session
             { model with ActivePage = Settings settingsModel }, Cmd.map SettingsMsg settingsCmd
 
-        | SessionRoute.NewPost ->
-            let newPostModel, newPostCmd = Pages.NewPost.init()
-            { model with ActivePage = NewPost newPostModel }, Cmd.map NewPostMsg newPostCmd
+        | SessionRoute.NewArticle ->
+            let newPostModel, newPostCmd = Pages.Editor.initNew session
+            { model with ActivePage = Editor newPostModel }, Cmd.map EditorMsg newPostCmd
 
 let setRoute result model =
     let model = { model with CurrentRoute = result }
@@ -67,12 +67,12 @@ let setRoute result model =
         match route with
         | SessionRoute sessionRoute -> setSessionRoute sessionRoute model
 
-        | Route.Article(ArticlesList) ->
+        | Route.Articles ->
             let articlesModel, articlesCmd = Pages.Articles.init()
             { model with ActivePage = Articles articlesModel }, Cmd.map ArticlesMsg articlesCmd
 
-        | Route.Article(ArticleRoute.Article slug) ->
-            let articleModel, articleCmd = Pages.Article.init slug
+        | Route.Article slug ->
+            let articleModel, articleCmd = Pages.Article.init model.Session slug
             { model with ActivePage = Article articleModel }, Cmd.map ArticleMsg articleCmd
 
         | Route.Login ->
@@ -126,7 +126,7 @@ let update msg model: Model * Cmd<Msg> =
                 | Pages.Login.ExternalMsg.SignedIn session ->
                     { model with Session = Some session },
                     Cmd.batch
-                        [ Route.Article ArticlesList |> newUrl
+                        [ Route.Articles |> newUrl
                           saveSession session ]
 
             { model with ActivePage = Login loginModel },
@@ -148,7 +148,7 @@ let update msg model: Model * Cmd<Msg> =
                 | Pages.Register.ExternalMsg.UserCreated session ->
                     { model with Session = Some session },
                     Cmd.batch
-                        [ Route.Article ArticlesList |> newUrl
+                        [ Route.Articles |> newUrl
                           saveSession session ]
 
             { model with ActivePage = Register registerModel },
@@ -166,11 +166,11 @@ let update msg model: Model * Cmd<Msg> =
 
         | _ -> model, Cmd.none
 
-    | NewPostMsg newPostMsg ->
+    | EditorMsg newPostMsg ->
         match model.ActivePage with
-        | NewPost newPostModel ->
-            let newPostModel, newPostCmd = Pages.NewPost.update newPostMsg newPostModel
-            { model with ActivePage = NewPost newPostModel }, Cmd.map NewPostMsg newPostCmd
+        | Editor newPostModel ->
+            let newPostModel, newPostCmd = Pages.Editor.update newPostMsg newPostModel
+            { model with ActivePage = Editor newPostModel }, Cmd.map EditorMsg newPostCmd
 
         | _ -> model, Cmd.none
 

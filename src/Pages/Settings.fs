@@ -36,6 +36,8 @@ type Msg =
 
 let private fetchUser session = Cmd.OfAsync.perform Users.fetchUser session UserFetched
 
+let private updateUser session validatedUser password =
+    Cmd.OfAsync.perform (Users.updateUser session) (validatedUser, password) UserSaved
 
 // STATE
 
@@ -82,14 +84,13 @@ let update msg model =
             let result = validateUser user
 
             match result with
-            | Ok validatedUser ->
-                model, Cmd.OfAsync.perform (Users.updateUser model.Session validatedUser) model.Password UserSaved
+            | Ok validatedUser -> model, updateUser model.Session validatedUser model.Password
 
             | Error err -> { model with Errors = [ err ] }, Cmd.none
 
         | _ -> model, Cmd.none
 
-    | UserSaved(Success _) -> model, Article ArticlesList |> newUrl
+    | UserSaved(Success _) -> model, newUrl Articles
 
     | UserSaved(Failure e) -> { model with Errors = e }, Cmd.none
 

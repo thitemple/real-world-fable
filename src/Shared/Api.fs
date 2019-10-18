@@ -19,7 +19,7 @@ let private badRequestErrorDecoder str =
 // The errors are returned as a key/pair value of string * string list
 // So converting all errors as just a simple string list
 
-let private makeRequest method body url decoder session =
+let private makeRequest method url decoder session body =
     async {
         let request = Http.request url |> Http.method method
 
@@ -55,12 +55,18 @@ let private makeRequest method body url decoder session =
         | _ -> return Failure [ response.responseText ]
     }
 
-let private safeGet url decoder session = makeRequest GET None url decoder (Some session)
-let private safePut (body: JsonValue) url decoder session =
-    makeRequest PUT (Some <| Encode.toString 0 body) url decoder (Some session)
+let private safeGet url decoder session = makeRequest GET url decoder (Some session) None
 
-let private get url decoder = makeRequest GET None url decoder None
-let private post url decoder body = makeRequest POST (Some <| Encode.toString 0 body) url decoder None
+let private safeChange method (body: JsonValue) url decoder session =
+    Some(Encode.toString 0 body) |> makeRequest method url decoder (Some session)
+
+let private safePut url decoder session (body: JsonValue) = safeChange PUT body url decoder session
+
+let private safePost url decoder session (body: JsonValue) = safeChange POST body url decoder session
+
+let private get url decoder = makeRequest GET url decoder None None
+
+let private post url decoder body = Some(Encode.toString 0 body) |> makeRequest POST url decoder None
 
 module Articles =
 
@@ -68,15 +74,24 @@ module Articles =
 
     let fetchArticles offset =
         let url = sprintf "%s?limit=10&offset=%i" articlesBaseUrl offset
-        get url ArticlesList.Decoder
+        get url Article.ArticlesList.Decoder
 
     let fetchArticle slug =
         let url = sprintf "%s/%s" articlesBaseUrl slug
-        get url (Decode.field "article" Article.Decoder)
+        get url (Decode.field "article" Article.Article.Decoder)
 
     let fetchComments slug =
         let url = sprintf "%s/%s/comments" articlesBaseUrl slug
         get url Comment.DecoderList
+
+    let createArticle session (article: Article.ValidatedSimplifiedArticle) =
+        Article.validatedToJson article
+        |> safePost articlesBaseUrl (Decode.field "article" Article.Article.Decoder) session
+
+    let updateArticle session (slug, article: Article.ValidatedSimplifiedArticle) =
+        let url = sprintf "%s/%s" articlesBaseUrl slug
+        Article.validatedToJson article |> safePut url (Decode.field "article" Article.Article.Decoder) session
+
 
 
 module Tags =
@@ -103,6 +118,6 @@ module Users =
 
     let fetchUser session = fetchUserWithDecoder User.User.Decoder session
 
-    let updateUser session (validatedUser: User.ValidatedUser) password =
+    let updateUser session (validatedUser: User.ValidatedUser, password) =
         let url = sprintf "%suser/" baseUrl
-        safePut (User.validatedToJsonValue validatedUser password) url (Decode.field "user" User.User.Decoder) session
+        User.validatedToJsonValue validatedUser password |> safePut url (Decode.field "user" User.User.Decoder) session
