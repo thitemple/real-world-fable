@@ -5,4 +5,4 @@ open Fable.React.Props
 
 let errorsList errors =
     let errorItem e = li [] [ str e ]
-    ul [ ClassName "" ] (List.map errorItem errors)
+    ul [ ClassName "error-messages" ] (List.map errorItem errors)
