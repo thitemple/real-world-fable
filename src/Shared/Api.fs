@@ -1,10 +1,10 @@
-module Shared.Api
+module Api
 
 open Thoth.Json
 open Fable.RemoteData
 open Fable.SimpleHttp
 
-open Shared.Types
+open Types
 
 let private baseUrl = "https://conduit.productionready.io/api/"
 
@@ -37,18 +37,22 @@ let private makeRequest method body url decoder session =
 
         let! response = Http.send request
 
-        if response.statusCode = 200 then
+        match response.statusCode with
+        | 200 ->
             let decodedUser = Decode.fromString decoder response.responseText
             match decodedUser with
             | Ok user -> return Success user
+
             | Error e -> return Failure [ e ]
-        elif response.statusCode = 422 then
+
+        | 422 ->
             let decodedErrors = Decode.fromString badRequestErrorDecoder response.responseText
             match decodedErrors with
             | Ok errors -> return Failure errors
+
             | Error e -> return Failure [ e ]
-        else
-            return Failure [ response.responseText ]
+
+        | _ -> return Failure [ response.responseText ]
     }
 
 let private safeGet url decoder session = makeRequest GET None url decoder (Some session)
@@ -74,11 +78,13 @@ module Articles =
         let url = sprintf "%s/%s/comments" articlesBaseUrl slug
         get url Comment.DecoderList
 
+
 module Tags =
 
     let fetchTags() =
         let url = sprintf "%stags" baseUrl
         get url Tag.ListDecoder
+
 
 module Users =
 

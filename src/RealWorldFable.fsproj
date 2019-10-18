@@ -3,16 +3,29 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Shared/Result.fs" />
+    <!-- EXTENSIONS -->
+    <Compile Include="Extensions/Result.fs" />
+    <Compile Include="Extensions/Fable.React.fs" />
+
+
+    <!-- SHARED -->
     <Compile Include="Shared/Router.fs" />
+    <Compile Include="Shared/Validation.fs" />
     <Compile Include="Shared/Types.fs" />
     <Compile Include="Shared/Api.fs" />
+    <Compile Include="Shared/Elements.fs" />
+    
+    <!-- PAGES -->
     <Compile Include="Pages/Articles.fs" />
     <Compile Include="Pages/Article.fs" />
     <Compile Include="Pages/Login.fs" />
     <Compile Include="Pages/Register.fs" />
     <Compile Include="Pages/Settings.fs" />
     <Compile Include="Pages/NewPost.fs" />
+    
+    <!-- ROOT ITEMS -->
+    <Compile Include="State.fs" />
+    <Compile Include="RootView.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>
   <ItemGroup>

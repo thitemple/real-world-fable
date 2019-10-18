@@ -1,4 +1,4 @@
-module Shared.Router
+module Router
 
 open Elmish.UrlParser
 open Elmish.Navigation
@@ -32,11 +32,17 @@ let pageParser: Parser<Route -> Route, Route> =
 let toHash route =
     match route with
     | (Article ArticlesList) -> ""
+
     | Article(ArticleRoute.Article slug) -> sprintf "article/%s" slug
+
     | Login -> "login"
+
     | Register -> "register"
+
     | SessionRoute Settings -> "settings"
+
     | SessionRoute NewPost -> "editor"
+
     | SessionRoute Logout -> "logout"
     |> (fun r -> sprintf "#/%s" r)
 

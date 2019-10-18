@@ -6,10 +6,14 @@ open Fable.React
 open Fable.React.Props
 open Fable.RemoteData
 
-open Shared.Types
-open Shared.Router
-open Shared.Types.User
-open Shared.Api
+open Types
+open Router
+open Types.User
+open Api
+open Elements
+
+
+// TYPES
 
 type Model =
     { Session: Session
@@ -27,7 +31,13 @@ type Msg =
     | SetPassword of string
     | Submit
 
-let fetchUser session = Cmd.OfAsync.perform Users.fetchUser session UserFetched
+
+// COMMANDS
+
+let private fetchUser session = Cmd.OfAsync.perform Users.fetchUser session UserFetched
+
+
+// STATE
 
 let init session =
     { Session = session
@@ -36,31 +46,37 @@ let init session =
       Errors = [] }, fetchUser session
 
 
-let updateForm transform model =
+let private updateForm transform model =
     match model.User with
     | Success formData -> { model with User = Success <| transform formData }, Cmd.none
+
     | _ -> model, Cmd.none
 
 let update msg model =
     match msg with
     | UserFetched data -> { model with User = data }, Cmd.none
+
     | SetImage image ->
         updateForm (fun formData ->
             { formData with
                   Image =
                       if String.IsNullOrWhiteSpace image then None
                       else Some image }) model
+
     | SetBio bio ->
         updateForm (fun formData ->
             { formData with
                   Bio =
                       if String.IsNullOrWhiteSpace bio then None
                       else Some bio }) model
-    | SetUsername username -> updateForm (fun formData -> { formData with Username = username }) model
-    | SetEmail email -> updateForm (fun formData -> { formData with Email = email }) model
-    | SetPassword password -> { model with Password = password }, Cmd.none
-    | Submit ->
 
+    | SetUsername username -> updateForm (fun formData -> { formData with Username = username }) model
+
+    | SetEmail email -> updateForm (fun formData -> { formData with Email = email }) model
+
+    | SetPassword password -> { model with Password = password }, Cmd.none
+
+    | Submit ->
         match model.User with
         | Success user ->
             let result = validateUser user
@@ -68,6 +84,7 @@ let update msg model =
             match result with
             | Ok validatedUser ->
                 model, Cmd.OfAsync.perform (Users.updateUser model.Session validatedUser) model.Password UserSaved
+
             | Error err -> { model with Errors = [ err ] }, Cmd.none
 
         | _ -> model, Cmd.none
@@ -78,7 +95,10 @@ let update msg model =
 
     | UserSaved _ -> model, Cmd.none
 
-let form dispatch (user: User) password =
+
+// VIEW
+
+let private form dispatch (user: User) password =
     form [ OnSubmit(fun _ -> dispatch Submit) ]
         [ fieldset [ ClassName "form-group" ]
               [ input
@@ -87,6 +107,7 @@ let form dispatch (user: User) password =
                     Value user.Image
                     OnChange(fun ev -> dispatch <| SetImage ev.Value)
                     Placeholder "URL of profile picture" ] ]
+
           fieldset [ ClassName "form-group" ]
               [ input
                   [ ClassName "form-control form-control-lg"
@@ -94,6 +115,7 @@ let form dispatch (user: User) password =
                     Value user.Username
                     OnChange(fun ev -> dispatch <| SetUsername ev.Value)
                     Placeholder "Your Name" ] ]
+
           fieldset [ ClassName "form-group" ]
               [ textarea
                   [ ClassName "form-control form-control-lg"
@@ -101,6 +123,7 @@ let form dispatch (user: User) password =
                     Value user.Bio
                     OnChange(fun ev -> dispatch <| SetBio ev.Value)
                     Placeholder "Short bio about you" ] [] ]
+
           fieldset [ ClassName "form-group" ]
               [ input
                   [ ClassName "form-control form-control-lg"
@@ -108,6 +131,7 @@ let form dispatch (user: User) password =
                     Value user.Email
                     OnChange(fun ev -> dispatch <| SetEmail ev.Value)
                     Placeholder "Email" ] ]
+
           fieldset [ ClassName "form-group" ]
               [ input
                   [ ClassName "form-control form-control-lg"
@@ -115,7 +139,14 @@ let form dispatch (user: User) password =
                     Value password
                     OnChange(fun ev -> dispatch <| SetPassword ev.Value)
                     Placeholder "Password" ] ]
+
           button [ ClassName "btn btn-lg btn-primary pull-xs-right" ] [ str "Update Settings" ] ]
+
+let private renderForm dispatch model =
+    match model.User with
+    | Success formData -> form dispatch formData model.Password
+
+    | _ -> empty
 
 let view dispatch (model: Model) =
     div [ ClassName "settings-page" ]
@@ -123,7 +154,7 @@ let view dispatch (model: Model) =
               [ div [ ClassName "row" ]
                     [ div [ ClassName "col-md-6 offset-md-3 col-xs-12" ]
                           [ h1 [ ClassName "text-xs-center" ] [ str "Your Settings" ]
-                            ul [ ClassName "error-messages" ] (List.map (fun e -> li [] [ str e ]) model.Errors)
-                            (match model.User with
-                             | Success formData -> form dispatch formData model.Password
-                             | _ -> str "") ] ] ] ]
+
+                            errorsList model.Errors
+
+                            renderForm dispatch model ] ] ] ]

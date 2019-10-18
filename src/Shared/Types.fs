@@ -1,15 +1,11 @@
-module Shared.Types
+module Types
 
 open System
 open Thoth.Json
 
-module Validate =
-    let isEmpty errorMsg get value =
-        if String.IsNullOrWhiteSpace <| get value then Error errorMsg
-        else Ok value
+open Validation
 
 module User =
-
     type User =
         { Username: string
           Email: string
@@ -36,9 +32,8 @@ module User =
                else Encode.string password) ]
 
     let validateUser (user: User) =
-
-        let isUsernameEmpty user = Validate.isEmpty "username can't be blank" (fun u -> u.Username) user
-        let isEmailEmpty user = Validate.isEmpty "email can't be blank" (fun u -> u.Email) user
+        let isUsernameEmpty user = isEmpty "username can't be blank" (fun u -> u.Username) user
+        let isEmailEmpty user = isEmpty "email can't be blank" (fun u -> u.Email) user
 
         let isValidEmail user =
             if String.exists (fun c -> c = '@') user.Email then Ok user
@@ -50,6 +45,7 @@ module User =
         |> Result.bind isValidEmail
         |> Result.map ValidatedUser
 
+
 type Session =
     { Username: string
       Token: string }
@@ -58,6 +54,7 @@ type Session =
         Decode.object <| fun get ->
             { Username = get.Required.Field "username" Decode.string
               Token = get.Required.Field "token" Decode.string }
+
 
 type Author =
     { Username: string
@@ -71,6 +68,7 @@ type Author =
               Bio = get.Optional.Field "bio" Decode.string
               Image = get.Required.Field "image" Decode.string
               Following = get.Required.Field "following" Decode.bool }
+
 
 type Tag =
     | Tag of string
@@ -89,6 +87,7 @@ type Article =
       Favorited: bool
       FavoritesCount: int
       Author: Author }
+
     static member Decoder: Decoder<Article> =
         Decode.object <| fun get ->
             { Slug = get.Required.Field "slug" Decode.string
@@ -102,6 +101,7 @@ type Article =
               FavoritesCount = get.Required.Field "favoritesCount" Decode.int
               Author = get.Required.Field "author" Author.Decoder }
 
+
 type ArticlesList =
     { Articles: Article list
       ArticlesCount: int }
@@ -110,6 +110,7 @@ type ArticlesList =
         Decode.object <| fun get ->
             { Articles = get.Required.Field "articles" (Decode.list Article.Decoder)
               ArticlesCount = get.Required.Field "articlesCount" Decode.int }
+
 
 type Comment =
     { Id: int
