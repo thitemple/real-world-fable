@@ -53,9 +53,13 @@ let setSessionRoute sessionRoute model =
             let settingsModel, settingsCmd = Pages.Settings.init session
             { model with ActivePage = Settings settingsModel }, Cmd.map SettingsMsg settingsCmd
 
-        | SessionRoute.NewArticle ->
-            let newPostModel, newPostCmd = Pages.Editor.initNew session
-            { model with ActivePage = Editor newPostModel }, Cmd.map EditorMsg newPostCmd
+        | NewArticle ->
+            let newArticleModel, newArticleCmd = Pages.Editor.initNew session
+            { model with ActivePage = Editor newArticleModel }, Cmd.map EditorMsg newArticleCmd
+
+        | EditArticle slug ->
+            let editArticleModel, editArticleCmd = Pages.Editor.initEdit session slug
+            { model with ActivePage = Editor editArticleModel }, Cmd.map EditorMsg editArticleCmd
 
 let setRoute result model =
     let model = { model with CurrentRoute = result }

@@ -101,7 +101,7 @@ let private comments dispatch session comments =
 let private articleOwnerButtons dispatch article =
     fragment []
         [ a
-            [ Router.href <| Router.Route.Article article.Slug
+            [ href <| SessionRoute(EditArticle article.Slug)
               ClassName "btn btn-outline-secondary btn-sm" ]
               [ i [ ClassName "ion-edit" ] []
 

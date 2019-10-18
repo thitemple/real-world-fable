@@ -32,6 +32,7 @@ type Msg =
     | RemoveTag of string
     | SaveArticle
     | ArticleSaved of RemoteData<string list, Article.Article>
+    | ArticleLoaded of RemoteData<string list, Article.Article>
 
 
 // COMMANDS
@@ -41,6 +42,7 @@ let createArticle session article = Cmd.OfAsync.perform (Articles.createArticle 
 let saveArticle session slug article =
     Cmd.OfAsync.perform (Articles.updateArticle session) (slug, article) ArticleSaved
 
+let fetchArticle slug = Cmd.OfAsync.perform (Articles.fetchArticle) slug ArticleLoaded
 
 // STATE
 
@@ -55,6 +57,13 @@ let initNew session =
                 Description = ""
                 Body = ""
                 TagList = Set.empty } }, Cmd.none
+
+let initEdit session slug =
+    { Session = session
+      TagPlaceholder = ""
+      Mode = Editing slug
+      Errors = []
+      Article = Loading }, fetchArticle slug
 
 let private updateArticle transform model =
     match model.Article with
@@ -77,6 +86,18 @@ let update (msg: Msg) (model: Model) =
         { model with TagPlaceholder = "" }, cmd
 
     | RemoveTag tag -> updateArticle (fun a -> { a with TagList = Set.remove tag a.TagList }) model
+
+    | ArticleLoaded data ->
+        data
+        |> map (fun article ->
+            { model with
+                  Article =
+                      Success
+                          { Title = article.Title
+                            Description = article.Description
+                            Body = article.Body
+                            TagList = article.TagList |> Set.ofList } }, Cmd.none)
+        |> withDefault (model, Cmd.none)
 
     | SaveArticle ->
         match model.Article with

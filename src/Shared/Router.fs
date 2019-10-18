@@ -7,6 +7,7 @@ open Fable.React.Props
 type SessionRoute =
     | Settings
     | NewArticle
+    | EditArticle of string
     | Logout
 
 type Route =
@@ -24,6 +25,7 @@ let pageParser: Parser<Route -> Route, Route> =
           map Register (s "register")
           map (Settings |> SessionRoute) (s "settings")
           map (NewArticle |> SessionRoute) (s "editor")
+          map (EditArticle >> SessionRoute) (s "editor" </> str)
           map (Logout |> SessionRoute) (s "logout") ]
 
 let toHash route =
@@ -41,6 +43,8 @@ let toHash route =
     | SessionRoute NewArticle -> "editor"
 
     | SessionRoute Logout -> "logout"
+
+    | SessionRoute(EditArticle slug) -> sprintf "editor/%s" slug
     |> (fun r -> sprintf "#/%s" r)
 
 let href = toHash >> Href
