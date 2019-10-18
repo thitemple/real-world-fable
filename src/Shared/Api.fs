@@ -8,7 +8,7 @@ open Shared.Types
 
 let private baseUrl = "https://conduit.productionready.io/api/"
 
-let BadRequestErrorDecoder str =
+let private badRequestErrorDecoder str =
     str
     |> Decode.at [ "errors" ]
            (Decode.dict (Decode.list Decode.string)
@@ -16,8 +16,10 @@ let BadRequestErrorDecoder str =
                 (Map.toList
                  >> List.collect (fun (key, errors) -> List.map (fun e -> sprintf "%s %s" key e) errors)
                  >> Decode.succeed))
+// The errors are returned as a key/pair value of string * string list
+// So converting all errors as just a simple string list
 
-let makeRequest method body url decoder session =
+let private makeRequest method body url decoder session =
     async {
         let request = Http.request url |> Http.method method
 
@@ -41,7 +43,7 @@ let makeRequest method body url decoder session =
             | Ok user -> return Success user
             | Error e -> return Failure [ e ]
         elif response.statusCode = 422 then
-            let decodedErrors = Decode.fromString BadRequestErrorDecoder response.responseText
+            let decodedErrors = Decode.fromString badRequestErrorDecoder response.responseText
             match decodedErrors with
             | Ok errors -> return Failure errors
             | Error e -> return Failure [ e ]
@@ -91,13 +93,10 @@ module Users =
 
     let fetchUserWithDecoder (decoder: Decoder<'a>) (session: Session) =
         let url = sprintf "%suser/" baseUrl
-        async { return! safeGet url (Decode.field "user" decoder) session }
+        safeGet url (Decode.field "user" decoder) session
 
     let fetchUser (session: Session) = async { return! fetchUserWithDecoder User.User.Decoder session }
 
     let updateUser session (validatedUser: User.ValidatedUser) password =
         let url = sprintf "%suser/" baseUrl
-        async
-            {
-            return! safePut (User.validatedToJsonValue validatedUser password) url
-                        (Decode.field "user" User.User.Decoder) session }
+        safePut (User.validatedToJsonValue validatedUser password) url (Decode.field "user" User.User.Decoder) session
