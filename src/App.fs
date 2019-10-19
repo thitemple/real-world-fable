@@ -10,13 +10,20 @@ open Types
 open State
 open RootView
 
-let private tryGetSessionFromLocalStorage =
+let private getSessionFromLocalStorage _ =
     Browser.WebStorage.localStorage.getItem "session"
     |> Option.ofObj
-    |> Option.bind (fun sessionStr -> Decode.fromString Session.Decoder sessionStr |> Result.toOption)
+    |> Option.map (Decode.fromString Session.Decoder)
+    |> Option.map (fun res ->
+        match res with
+        | Ok session -> Cmd.OfFunc.result <| SessionLoaded session
+
+        | _ -> Cmd.none)
+    |> Option.defaultValue Cmd.none
 
 
-Program.mkProgram (init tryGetSessionFromLocalStorage) update rootView
+Program.mkProgram init update rootView
+|> Program.withSubscription getSessionFromLocalStorage
 |> Program.toNavigable (UrlParser.parseHash pageParser) setRoute
 |> Program.withReactSynchronous "real-world-fable-app"
 |> Program.withConsoleTrace

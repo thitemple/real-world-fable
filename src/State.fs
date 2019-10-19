@@ -26,12 +26,24 @@ type Msg =
     | RegisterMsg of Pages.Register.Msg
     | SettingsMsg of Pages.Settings.Msg
     | EditorMsg of Pages.Editor.Msg
+    | SessionLoaded of Session
     | NoOp
 
 type Model =
     { CurrentRoute: Route option
       ActivePage: Page
       Session: Types.Session option }
+
+
+// COMMANDS
+
+let private saveSession (session: Session) =
+    Cmd.OfFunc.perform (fun s ->
+        let sessionStr = Encode.Auto.toString (0, s, isCamelCase = true)
+        Browser.WebStorage.localStorage.setItem ("session", sessionStr)) session (fun _ -> NoOp)
+
+let private removeSession =
+    Cmd.OfFunc.perform (fun _ -> Browser.WebStorage.localStorage.removeItem ("session")) () (fun _ -> NoOp)
 
 
 // STATE
@@ -46,8 +58,7 @@ let setSessionRoute sessionRoute model =
             { model with Session = None },
             Cmd.batch
                 [ newUrl Route.Articles
-                  Cmd.OfFunc.perform (fun _ -> Browser.WebStorage.localStorage.removeItem ("session")) ()
-                      (fun _ -> NoOp) ]
+                  removeSession ]
 
         | SessionRoute.Settings ->
             let settingsModel, settingsCmd = Pages.Settings.init session
@@ -87,16 +98,11 @@ let setRoute result model =
             let registerModel, registerCmd = Pages.Register.init()
             { model with ActivePage = Register registerModel }, Cmd.map RegisterMsg registerCmd
 
-let init session (route: Route option): Model * Cmd<Msg> =
+let init (route: Route option): Model * Cmd<Msg> =
     { CurrentRoute = None
       ActivePage = Loading
-      Session = session }
+      Session = None }
     |> setRoute route
-
-let private saveSession (session: Session) =
-    Cmd.OfFunc.perform (fun s ->
-        let sessionStr = Encode.Auto.toString (0, s, isCamelCase = true)
-        Browser.WebStorage.localStorage.setItem ("session", sessionStr)) session (fun _ -> NoOp)
 
 let update msg model: Model * Cmd<Msg> =
 
@@ -177,5 +183,7 @@ let update msg model: Model * Cmd<Msg> =
             { model with ActivePage = Editor newPostModel }, Cmd.map EditorMsg newPostCmd
 
         | _ -> model, Cmd.none
+
+    | SessionLoaded session -> { model with Session = Some session }, Cmd.none
 
     | NoOp -> model, Cmd.none
