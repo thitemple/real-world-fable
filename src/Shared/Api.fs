@@ -39,9 +39,9 @@ let private makeRequest method url decoder session body =
 
         match response.statusCode with
         | 200 ->
-            let decodedUser = Decode.fromString decoder response.responseText
-            match decodedUser with
-            | Ok user -> return Success user
+            let decodedValue = Decode.fromString decoder response.responseText
+            match decodedValue with
+            | Ok value -> return Success value
 
             | Error e -> return Failure [ e ]
 
