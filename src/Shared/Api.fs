@@ -173,3 +173,9 @@ module Users =
     let updateUser session (validatedUser: User.ValidatedUser, password) =
         let url = sprintf "%suser/" baseUrl
         User.validatedToJsonValue validatedUser password |> safePut url (Decode.field "user" User.User.Decoder) session
+
+
+module Profiles =
+    let fetchProfile username =
+        let url = sprintf "%sprofiles/%s/" baseUrl username
+        get url (Decode.field "profile" Profile.Decoder)

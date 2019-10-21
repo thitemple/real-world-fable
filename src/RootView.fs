@@ -5,12 +5,13 @@ open Fable.React.Props
 
 open Router
 open State
+open Types
 
 let private isActiveRoute optRoute targetRoute =
     Option.map (fun route -> route = targetRoute) optRoute |> Option.defaultValue false
 
 
-let private authenticatedMenuItems isActiveRoute =
+let authenticatedMenuItems isActiveRoute (session: Session) =
     fragment []
         [ li [ ClassName "nav-item" ]
               [ a
@@ -57,7 +58,7 @@ let private unauthenticatedMenuItems isActiveRoute =
 
 let private navbarItems isActiveRoute session =
     match session with
-    | Some _ -> authenticatedMenuItems isActiveRoute
+    | Some session -> authenticatedMenuItems isActiveRoute session
     | None -> unauthenticatedMenuItems isActiveRoute
 
 

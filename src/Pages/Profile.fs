@@ -18,18 +18,18 @@ type ArticlesView =
     | FavoritedArticles of RemoteData<string list, ArticlesList>
 
 type Model =
-    { User: RemoteData<string list, User>
+    { Profile: RemoteData<string list, Profile>
       Username: string
       ArticlesView: ArticlesView }
 
 type Msg =
-    | UserLoaded of RemoteData<string list, User>
+    | ProfileLoaded of RemoteData<string list, Profile>
     | ArticlesLoaded of RemoteData<string list, ArticlesList>
 
 
 // COMMANDS
 
-let private fetchAuthor username = Cmd.OfAsync.perform Users.fetchUser username UserLoaded
+let private fetchProfile username = Cmd.OfAsync.perform Profiles.fetchProfile username ProfileLoaded
 
 
 let private fetchArticlesFromAuthor username =
@@ -39,36 +39,44 @@ let private fetchArticlesFromAuthor username =
 // STATE
 
 let init username =
-    { User = Loading
+    { Profile = Loading
       Username = username
-      ArticlesView = AuthorArticles Loading }, Cmd.none
+      ArticlesView = AuthorArticles Loading },
+    Cmd.batch
+        [ fetchProfile username
+          fetchArticlesFromAuthor username ]
 
 
-let update msg model = model, Cmd.none
+let update msg model =
+    match msg with
+    | ProfileLoaded data -> { model with Profile = data }, Cmd.none
+
+    | ArticlesLoaded data ->
+        match model.ArticlesView with
+        | AuthorArticles _ -> { model with ArticlesView = AuthorArticles data }, Cmd.none
+
+        | FavoritedArticles _ -> { model with ArticlesView = FavoritedArticles data }, Cmd.none
 
 
 // VIEW
 
-let private userInfo user =
+let private userInfo (profile: Profile) =
     div [ ClassName "user-info" ]
         [ div [ ClassName "container" ]
               [ div [ ClassName "row" ]
                     [ div [ ClassName "col-xs-12 col-md-10 offset-md-1" ]
-                          [ img
-                              [ Src
-                                <| Option.defaultWith
-                                    (fun _ -> "https://static.productionready.io/images/smiley-cyrus.jpg") user.Image ]
+                          [ img [ Src profile.Image ]
 
-                            h4 [] [ str user.Username ]
+                            h4 [] [ str profile.Username ]
 
-                            p [] [ str <| Option.defaultWith (fun _ -> "") user.Bio ]
+                            p [] [ str <| Option.defaultWith (fun _ -> "") profile.Bio ]
 
                             // TODO: implement follow author
                             // TODO: replace with link to edit own profile
                             button [ ClassName "btn btn-sm btn-outline-secondary action-btn" ]
                                 [ i [ ClassName "ion-plus-round" ] []
 
-                                  str <| sprintf " Follow %s" user.Username ] ] ] ] ]
+                                  str <| sprintf " Follow %s" profile.Username ] ] ] ] ]
 
 
 let private article (article: Article) =
@@ -84,7 +92,7 @@ let private article (article: Article) =
                 button [ ClassName "btn btn-outline-primary btn-sm pull-xs-right" ]
                     [ i [ ClassName "ion-heart" ] []
 
-                      str "29" ] ]
+                      str " 29" ] ]
 
           a [ ClassName "preview-link" ]
               [ h1 [] [ str article.Title ]
@@ -104,8 +112,9 @@ let private articlesToggle =
 
 let view dispatch model =
     div [ ClassName "profile-page" ]
-        [ (match model.User with
-           | Success author -> userInfo author
+        [ (match model.Profile with
+           | Success profile -> userInfo profile
+
            | _ -> empty)
 
           div [ ClassName "container" ]
