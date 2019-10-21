@@ -217,7 +217,7 @@ let private infoButtons dispatch authentication (article: Article.Article) =
 
               str "  "
 
-              button [ ClassName "btn btn-sm btn-outline-primary" ]
+              button [ ClassName "btn btn-sm btn-outline-primary" ]  // TODO: favorite an article
                   [ i [ ClassName "ion-heart" ] []
 
                     str " Favorite Post "
