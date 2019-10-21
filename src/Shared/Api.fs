@@ -137,6 +137,10 @@ module Articles =
 
 
 
+    let fetchArticlesFromAuthor author =
+        let url = sprintf "%s?author=%s&limit=10&offset=%i" articlesBaseUrl author 0
+        get url Article.ArticlesList.Decoder
+
 module Tags =
 
     let fetchTags() =

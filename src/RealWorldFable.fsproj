@@ -23,6 +23,7 @@
     <Compile Include="Pages/Register.fs" />
     <Compile Include="Pages/Settings.fs" />
     <Compile Include="Pages/Editor.fs" />
+    <Compile Include="Pages/Profile.fs" />
     
     <!-- ROOT ITEMS -->
     <Compile Include="State.fs" />
