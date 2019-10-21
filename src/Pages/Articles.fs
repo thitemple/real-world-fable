@@ -1,9 +1,9 @@
 module Pages.Articles
 
 open Elmish
-open Fable.RemoteData
 open Fable.React
 open Fable.React.Props
+open Fable.RemoteData
 
 open Router
 open Types.Article
@@ -14,34 +14,58 @@ open Api
 // TYPES
 
 type Msg =
-    | ArticlesFetched of articles: RemoteData<string list, ArticlesList>
-    | TagsFetched of articles: RemoteData<string list, Tag list>
+    | ArticlesFetched of RemoteData<string list, ArticlesList>
+    | TagsFetched of RemoteData<string list, Tag list>
+    | ArticleFavorited of RemoteData<string list, Article>
+    | ArticleUnfavorited of RemoteData<string list, Article>
     | SetArticlesPage of int
+    | FavoriteArticle of Article
+    | UnfavoriteArticle of Article
 
 type Model =
     { Articles: RemoteData<string list, ArticlesList>
       PopularTags: RemoteData<string list, Tag list>
-      CurrentArticlesPage: int }
+      CurrentArticlesPage: int
+      Session: Session option }
 
 
 // COMMANDS
 
-let private fetchArticles page =
+let private fetchArticles session page =
     let offset = page - 1
-    Cmd.OfAsync.perform Articles.fetchArticles offset ArticlesFetched
+    match session with
+    | Some s ->
+        Cmd.OfAsync.perform Articles.fetchArticlesWithSession
+            {| Session = s
+               Offset = offset |} ArticlesFetched
+
+    | None -> Cmd.OfAsync.perform Articles.fetchArticles offset ArticlesFetched
 
 
 let private fetchTags = Cmd.OfAsync.perform Tags.fetchTags () TagsFetched
 
 
+let private favArticle session article =
+    Cmd.OfAsync.perform Articles.favoriteArticle
+        {| Session = session
+           Article = article |} ArticleFavorited
+
+
+let private unfavArticle session article =
+    Cmd.OfAsync.perform Articles.unfavoriteArticle
+        {| Session = session
+           Article = article |} ArticleUnfavorited
+
+
 // STATE
 
-let init() =
+let init session =
     { Articles = Loading
       PopularTags = Loading
-      CurrentArticlesPage = 1 },
+      CurrentArticlesPage = 1
+      Session = session },
     Cmd.batch
-        [ fetchArticles 1
+        [ fetchArticles session 1
           fetchTags ]
 
 
@@ -49,9 +73,43 @@ let update msg model: Model * Cmd<Msg> =
     match msg with
     | ArticlesFetched data -> { model with Articles = data }, Cmd.none
 
-    | SetArticlesPage page -> { model with CurrentArticlesPage = page }, fetchArticles page
+    | SetArticlesPage page -> { model with CurrentArticlesPage = page }, fetchArticles model.Session page
 
     | TagsFetched data -> { model with PopularTags = data }, Cmd.none
+
+    | ArticleFavorited(Success article) ->
+        map (fun (articles: ArticlesList) ->
+            let updatedArticles =
+                List.map (fun a ->
+                    if a.Slug = article.Slug then article
+                    else a) articles.Articles
+            { model with Articles = Success { articles with Articles = updatedArticles } }, Cmd.none) model.Articles
+        |> withDefault (model, Cmd.none)
+
+    | ArticleFavorited _ -> model, Cmd.none
+
+    | ArticleUnfavorited(Success article) ->
+        map (fun (articles: ArticlesList) ->
+            let updatedArticles =
+                List.map (fun a ->
+                    if a.Slug = article.Slug then article
+                    else a) articles.Articles
+            { model with Articles = Success { articles with Articles = updatedArticles } }, Cmd.none) model.Articles
+        |> withDefault (model, Cmd.none)
+
+    | ArticleUnfavorited _ -> model, Cmd.none
+
+    | FavoriteArticle article ->
+        match model.Session with
+        | Some s -> model, favArticle s article
+
+        | None -> model, Cmd.none
+
+    | UnfavoriteArticle article ->
+        match model.Session with
+        | Some s -> model, unfavArticle s article
+
+        | None -> model, Cmd.none
 
 
 // VIEW
@@ -61,7 +119,7 @@ let private tags tags =
         (List.map (fun tag -> li [ ClassName "tag-default tag-pill tag-outline" ] [ str tag ]) tags)
 
 
-let private article (article: Article) =
+let private article dispatch (article: Article) =
     div [ ClassName "article-preview" ]
         [ div [ ClassName "article-meta" ]
               [ a [ Href "#" ] [ img [ Src article.Author.Image ] ] // TODO: link to author
@@ -71,10 +129,19 @@ let private article (article: Article) =
 
                       span [ ClassName "date" ] [ str <| article.CreatedAt.ToLongDateString() ] ]
 
-                button [ ClassName "btn btn-outline-primary btn-sm pull-xs-right" ]  // TODO: favorite an article
-                    [ i [ ClassName "ion-heart" ] []
+                div [ ClassName "pull-xs-right" ]
+                    [ button
+                        [ classList
+                            [ ("btn", true)
+                              ("btn-sm", true)
+                              ("btn-outline-primary", not article.Favorited)
+                              ("btn-primary", article.Favorited) ]
+                          OnClick(fun _ ->
+                              if article.Favorited then dispatch <| UnfavoriteArticle article
+                              else dispatch <| FavoriteArticle article) ]
+                          [ i [ ClassName "ion-heart" ] []
 
-                      str <| sprintf " %i" article.FavoritesCount ] ]
+                            str <| sprintf " %i" article.FavoritesCount ] ] ]
           a
               [ ClassName "preview-link"
                 href <| Article article.Slug ]
@@ -142,7 +209,7 @@ let view dispatch model =
                             (match model.Articles with
                              | Success articles ->
                                  fragment []
-                                     [ div [] (List.map article articles.Articles)
+                                     [ div [] (List.map (article dispatch) articles.Articles)
 
                                        pagination dispatch model.CurrentArticlesPage articles.ArticlesCount ]
 

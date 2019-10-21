@@ -61,6 +61,9 @@ let private makeRequest method url decoder session body =
 let private safeGet url decoder session = makeRequest GET url decoder (Some session) None
 
 
+let private safeDelete url decoder session = makeRequest DELETE url decoder (Some session) None
+
+
 let private safeChange method (body: JsonValue) url decoder session =
     Some(Encode.toString 0 body) |> makeRequest method url decoder (Some session)
 
@@ -85,6 +88,9 @@ module Articles =
         let url = sprintf "%s?limit=10&offset=%i" articlesBaseUrl offset
         get url Article.ArticlesList.Decoder
 
+    let fetchArticlesWithSession (payload: {| Session: Session; Offset: int |}) =
+        let url = sprintf "%s?limit=10&offset=%i" articlesBaseUrl payload.Offset
+        safeGet url Article.ArticlesList.Decoder payload.Session
 
     let fetchArticle slug =
         let url = sprintf "%s/%s" articlesBaseUrl slug
@@ -110,6 +116,15 @@ module Articles =
         let url = sprintf "%s/%s/comments" articlesBaseUrl payload.Slug
         let comment = Encode.object [ ("body", Encode.string payload.CommentBody) ]
         safePost url (Decode.field "comment" Comment.Decoder) payload.Session {| comment = comment |}
+
+    let favoriteArticle (payload: {| Session: Session; Article: Article.Article |}) =
+        let url = sprintf "%s/%s/favorite" articlesBaseUrl payload.Article.Slug
+        safePost url (Decode.field "article" Article.Article.Decoder) payload.Session ""
+
+    let unfavoriteArticle (payload: {| Session: Session; Article: Article.Article |}) =
+        let url = sprintf "%s/%s/favorite" articlesBaseUrl payload.Article.Slug
+        safeDelete url (Decode.field "article" Article.Article.Decoder) payload.Session
+
 
 
 module Tags =

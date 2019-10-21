@@ -1,3 +1,5 @@
+## 18 - Favorite an article from articles list
+
 ## 17 - Add comments to an article
 
 ## 16 - Edits an article

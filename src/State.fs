@@ -84,7 +84,7 @@ let setRoute result model =
         | SessionRoute sessionRoute -> setSessionRoute sessionRoute model
 
         | Route.Articles ->
-            let articlesModel, articlesCmd = Pages.Articles.init()
+            let articlesModel, articlesCmd = Pages.Articles.init model.Session
             { model with ActivePage = Articles articlesModel }, Cmd.map ArticlesMsg articlesCmd
 
         | Route.Article slug ->
