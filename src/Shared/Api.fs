@@ -92,7 +92,10 @@ module Articles =
         let url = sprintf "%s/%s" articlesBaseUrl slug
         Article.validatedToJson article |> safePut url (Decode.field "article" Article.Article.Decoder) session
 
-
+    let createComment (payload: {| Session: Session; Slug: string; CommentBody: string |}) =
+        let url = sprintf "%s/%s/comments" articlesBaseUrl payload.Slug
+        let comment = Encode.object [ ("body", Encode.string payload.CommentBody) ]
+        safePost url (Decode.field "comment" Comment.Decoder) payload.Session {| comment = comment |}
 
 module Tags =
 

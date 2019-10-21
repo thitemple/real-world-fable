@@ -26,7 +26,6 @@ type Msg =
     | RegisterMsg of Pages.Register.Msg
     | SettingsMsg of Pages.Settings.Msg
     | EditorMsg of Pages.Editor.Msg
-    | SessionLoaded of Session
     | NoOp
 
 type Model =
@@ -98,10 +97,10 @@ let setRoute result model =
             let registerModel, registerCmd = Pages.Register.init()
             { model with ActivePage = Register registerModel }, Cmd.map RegisterMsg registerCmd
 
-let init (route: Route option): Model * Cmd<Msg> =
+let init session (route: Route option): Model * Cmd<Msg> =
     { CurrentRoute = None
       ActivePage = Loading
-      Session = None }
+      Session = session }
     |> setRoute route
 
 let update msg model: Model * Cmd<Msg> =
@@ -183,7 +182,5 @@ let update msg model: Model * Cmd<Msg> =
             { model with ActivePage = Editor newPostModel }, Cmd.map EditorMsg newPostCmd
 
         | _ -> model, Cmd.none
-
-    | SessionLoaded session -> { model with Session = Some session }, Cmd.none
 
     | NoOp -> model, Cmd.none

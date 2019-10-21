@@ -161,3 +161,5 @@ type Comment =
 
     static member DecoderList: Decoder<Comment list> =
         Decode.object <| fun get -> get.Required.At [ "comments" ] (Decode.list Comment.Decoder)
+
+    static member Encode comment = Encode.object [ ("body", Encode.string comment.Body) ]
