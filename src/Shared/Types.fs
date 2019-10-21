@@ -33,6 +33,7 @@ module User =
 
     let validateUser (user: User) =
         let isUsernameEmpty user = isEmpty "username can't be blank" (fun u -> u.Username) user
+
         let isEmailEmpty user = isEmpty "email can't be blank" (fun u -> u.Email) user
 
         let isValidEmail user =
@@ -88,7 +89,9 @@ module Article =
 
     let validateArticle (simplifiedArticle: SimplifiedArticle) =
         let isTitleEmpty = isEmpty "title can't be empty" (fun a -> a.Title)
+
         let isDescriptionEmpty = isEmpty "description can't be empty" (fun a -> a.Body)
+
         let isBodyEmpty = isEmpty "body can't be empty" (fun a -> a.Description)
 
         simplifiedArticle

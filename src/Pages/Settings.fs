@@ -36,6 +36,7 @@ type Msg =
 
 let private fetchUser session = Cmd.OfAsync.perform Users.fetchUser session UserFetched
 
+
 let private updateUser session validatedUser password =
     Cmd.OfAsync.perform (Users.updateUser session) (validatedUser, password) UserSaved
 
@@ -53,6 +54,7 @@ let private updateForm transform model =
     | Success formData -> { model with User = Success <| transform formData }, Cmd.none
 
     | _ -> model, Cmd.none
+
 
 let update msg model =
     match msg with
@@ -143,11 +145,13 @@ let private form dispatch (user: User) password =
 
           button [ ClassName "btn btn-lg btn-primary pull-xs-right" ] [ str "Update Settings" ] ]
 
+
 let private renderForm dispatch model =
     match model.User with
     | Success formData -> form dispatch formData model.Password
 
     | _ -> empty
+
 
 let view dispatch (model: Model) =
     div [ ClassName "settings-page" ]

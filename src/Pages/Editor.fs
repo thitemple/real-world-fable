@@ -39,8 +39,10 @@ type Msg =
 
 let createArticle session article = Cmd.OfAsync.perform (Articles.createArticle session) article ArticleSaved
 
+
 let saveArticle session slug article =
     Cmd.OfAsync.perform (Articles.updateArticle session) (slug, article) ArticleSaved
+
 
 let fetchArticle slug = Cmd.OfAsync.perform (Articles.fetchArticle) slug ArticleLoaded
 
@@ -58,6 +60,7 @@ let initNew session =
                 Body = ""
                 TagList = Set.empty } }, Cmd.none
 
+
 let initEdit session slug =
     { Session = session
       TagPlaceholder = ""
@@ -65,11 +68,13 @@ let initEdit session slug =
       Errors = []
       Article = Loading }, fetchArticle slug
 
+
 let private updateArticle transform model =
     match model.Article with
     | Success article -> { model with Article = Success <| transform article }, Cmd.none
 
     | _ -> model, Cmd.none
+
 
 let update (msg: Msg) (model: Model) =
     match msg with
@@ -135,6 +140,7 @@ let private tagList dispatch tags =
          |> Set.toList
          |> List.map tag)
 
+
 let private form dispatch tag (article: SimplifiedArticle) =
     form [ OnSubmit(fun _ -> dispatch SaveArticle) ]
         [ fieldset []
@@ -177,6 +183,7 @@ let private form dispatch tag (article: SimplifiedArticle) =
                       tagList dispatch article.TagList ]
 
                 button [ ClassName "btn btn-lg pull-xs-right btn-primary" ] [ str "Publish Article" ] ] ]
+
 
 let view dispatch (model: Model) =
     div [ ClassName "editor-page" ]

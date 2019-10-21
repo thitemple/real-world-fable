@@ -46,6 +46,7 @@ let init(): Model * Cmd<Msg> =
       Password = ""
       Errors = [] }, Cmd.none
 
+
 let update msg (model: Model) =
     match msg with
     | SetUsername username -> { model with Username = username }, Cmd.none, NoOp
@@ -94,6 +95,7 @@ let private form dispatch model =
                     Placeholder "Password" ] ]
 
           button [ ClassName "btn btn-lg btn-primary pull-xs-right" ] [ str "Sign up" ] ]
+
 
 let view dispatch model =
     div [ ClassName "auth-page" ]

@@ -41,6 +41,7 @@ let private saveSession (session: Session) =
         let sessionStr = Encode.Auto.toString (0, s, isCamelCase = true)
         Browser.WebStorage.localStorage.setItem ("session", sessionStr)) session (fun _ -> NoOp)
 
+
 let private removeSession =
     Cmd.OfFunc.perform (fun _ -> Browser.WebStorage.localStorage.removeItem ("session")) () (fun _ -> NoOp)
 
@@ -71,6 +72,7 @@ let setSessionRoute sessionRoute model =
             let editArticleModel, editArticleCmd = Pages.Editor.initEdit session slug
             { model with ActivePage = Editor editArticleModel }, Cmd.map EditorMsg editArticleCmd
 
+
 let setRoute result model =
     let model = { model with CurrentRoute = result }
 
@@ -97,11 +99,13 @@ let setRoute result model =
             let registerModel, registerCmd = Pages.Register.init()
             { model with ActivePage = Register registerModel }, Cmd.map RegisterMsg registerCmd
 
+
 let init session (route: Route option): Model * Cmd<Msg> =
     { CurrentRoute = None
       ActivePage = Loading
       Session = session }
     |> setRoute route
+
 
 let update msg model: Model * Cmd<Msg> =
 

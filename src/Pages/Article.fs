@@ -13,9 +13,11 @@ open Api
 open Elements
 
 
+// TYPES
+
 type AuthenticatedSession =
     { Session: Session
-      User: RemoteData<string list, User.User> } // TYPES
+      User: RemoteData<string list, User.User> }
 
 type Authentication =
     | Authenticated of AuthenticatedSession
@@ -41,7 +43,9 @@ type Msg =
 
 let private fetchArticle slug = Cmd.OfAsync.perform Articles.fetchArticle slug ArticleFetched
 
+
 let private fetchComments slug = Cmd.OfAsync.perform Articles.fetchComments slug CommentsFetched
+
 
 let private createComment session slug comment =
     let payload =
@@ -49,6 +53,7 @@ let private createComment session slug comment =
            Slug = slug
            CommentBody = comment |}
     Cmd.OfAsync.perform Articles.createComment payload CommentCreated
+
 
 let private fetchUser session = Cmd.OfAsync.perform Users.fetchUser session UserFetched
 
@@ -73,6 +78,7 @@ let init session slug =
         [ fetchArticle slug
           fetchComments slug
           cmdUser ]
+
 
 let update msg model =
     match msg with
@@ -116,6 +122,7 @@ let update msg model =
 
         | _ -> model, Cmd.none
 
+
 // VIEW
 
 let private comment (comment: Comment) =
@@ -133,6 +140,7 @@ let private comment (comment: Comment) =
                       a [ ClassName "comment-author" ] [ str comment.Author.Username ] // TODO: link to comment author
 
                       span [ ClassName "date-posted" ] [ str <| comment.CreatedAt.ToLongDateString() ] ] ] ]
+
 
 let private commentForm dispatch (user: User.User) errors newComment =
     form
@@ -153,6 +161,7 @@ let private commentForm dispatch (user: User.User) errors newComment =
                            user.Image
                     ClassName "comment-author-img" ]
                 button [ ClassName "btn btn-sn btn-primary" ] [ str "Post Comment" ] ] ]
+
 
 let private comments dispatch model =
     div [ ClassName "row" ]
@@ -175,6 +184,7 @@ let private comments dispatch model =
 
                  | _ -> empty) ] ]
 
+
 let private articleOwnerButtons dispatch article =
     fragment []
         [ a
@@ -190,6 +200,7 @@ let private articleOwnerButtons dispatch article =
               [ i [ ClassName "ion-trash-a" ] []
 
                 str " Delete Article" ] ] // TODO: delete an article
+
 
 let private infoButtons dispatch authentication (article: Article.Article) =
     match authentication with
@@ -228,6 +239,7 @@ let private banner dispatch authentication article =
                             span [ ClassName "date" ] [ str <| article.CreatedAt.ToLongDateString() ] ]
 
                       infoButtons dispatch authentication article ] ] ]
+
 
 let view dispatch (model: Model) =
     div [ ClassName "article-page" ]

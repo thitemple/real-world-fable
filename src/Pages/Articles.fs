@@ -30,6 +30,7 @@ let private fetchArticles page =
     let offset = page - 1
     Cmd.OfAsync.perform Articles.fetchArticles offset ArticlesFetched
 
+
 let private fetchTags = Cmd.OfAsync.perform Tags.fetchTags () TagsFetched
 
 
@@ -42,6 +43,7 @@ let init() =
     Cmd.batch
         [ fetchArticles 1
           fetchTags ]
+
 
 let update msg model: Model * Cmd<Msg> =
     match msg with
@@ -57,6 +59,7 @@ let update msg model: Model * Cmd<Msg> =
 let private tags tags =
     ul [ ClassName "tag-list" ]
         (List.map (fun tag -> li [ ClassName "tag-default tag-pill tag-outline" ] [ str tag ]) tags)
+
 
 let private article (article: Article) =
     div [ ClassName "article-preview" ]
@@ -96,6 +99,7 @@ let private sidebar dispatch popularTags =
 
                  | _ -> empty) ] ]
 
+
 let private pagination dispatch currentPage totalArticles =
     ul [ ClassName "pagination" ]
         (seq {
@@ -111,6 +115,7 @@ let private pagination dispatch currentPage totalArticles =
                               dispatch <| SetArticlesPage i) ] [ str <| sprintf "%i" i ] ]
          })
 
+
 let private banner =
     div [ ClassName "banner" ]
         [ div [ ClassName "container" ]
@@ -118,12 +123,14 @@ let private banner =
 
                 p [] [ str "A place to share your knowledge." ] ] ]
 
+
 let private feedToggle =
     div [ ClassName "feed-toggle" ]
         [ ul [ ClassName "nav nav-pills outline-active" ]
               [ li [ ClassName "nav-item" ] [ a [ ClassName "nav-link disabled" ] [ str "Your Feed" ] ]
 
                 li [ ClassName "nav-item" ] [ a [ ClassName "nav-link active" ] [ str "Global Feed" ] ] ] ]
+
 
 let view dispatch model =
     div [ ClassName "home-page" ]

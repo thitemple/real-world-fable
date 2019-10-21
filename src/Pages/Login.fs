@@ -42,6 +42,7 @@ let init(): Model * Cmd<Msg> =
       Password = ""
       Errors = [] }, Cmd.none
 
+
 let update (msg: Msg) (model: Model) =
     match msg with
     | SetEmail email -> { model with Email = email }, Cmd.none, NoOp
@@ -80,6 +81,7 @@ let private form dispatch model =
                     Placeholder "Password" ] ]
 
           button [ ClassName "btn btn-lg btn-primary pull-xs-right" ] [ str "Sign in" ] ]
+
 
 let view dispatch model =
     div [ ClassName "auth-page" ]

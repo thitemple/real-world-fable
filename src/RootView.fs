@@ -9,7 +9,8 @@ open State
 let private isActiveRoute optRoute targetRoute =
     Option.map (fun route -> route = targetRoute) optRoute |> Option.defaultValue false
 
-let authenticatedMenuItems isActiveRoute =
+
+let private authenticatedMenuItems isActiveRoute =
     fragment []
         [ li [ ClassName "nav-item" ]
               [ a
@@ -36,6 +37,7 @@ let authenticatedMenuItems isActiveRoute =
                   [ ClassName "nav-link"
                     href <| SessionRoute Logout ] [ str " Sign out" ] ] ]
 
+
 let private unauthenticatedMenuItems isActiveRoute =
     fragment []
         [ li [ ClassName "nav-item" ]
@@ -52,10 +54,12 @@ let private unauthenticatedMenuItems isActiveRoute =
                         ("active", isActiveRoute Route.Register) ]
                     href Route.Register ] [ str "Sign up" ] ] ]
 
+
 let private navbarItems isActiveRoute session =
     match session with
     | Some _ -> authenticatedMenuItems isActiveRoute
     | None -> unauthenticatedMenuItems isActiveRoute
+
 
 let private navbar isActiveRoute session =
     nav [ ClassName "navbar navbar-light" ]
@@ -75,6 +79,7 @@ let private navbar isActiveRoute session =
 
                       navbarItems isActiveRoute session ] ] ]
 
+
 let private activePage dispatch activePage =
     match activePage with
     | Articles articlesModel -> Pages.Articles.view (ArticlesMsg >> dispatch) articlesModel
@@ -92,6 +97,7 @@ let private activePage dispatch activePage =
     | Loading -> div [] [ str "Loading" ]
 
     | NotFound -> div [] [ str "404" ]
+
 
 let rootView model dispatch =
     div []

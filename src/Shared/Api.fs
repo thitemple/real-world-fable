@@ -8,6 +8,7 @@ open Types
 
 let private baseUrl = "https://conduit.productionready.io/api/"
 
+
 let private badRequestErrorDecoder str =
     str
     |> Decode.at [ "errors" ]
@@ -18,6 +19,7 @@ let private badRequestErrorDecoder str =
                  >> Decode.succeed))
 // The errors are returned as a key/pair value of string * string list
 // So converting all errors as just a simple string list
+
 
 let private makeRequest method url decoder session body =
     async {
@@ -55,16 +57,22 @@ let private makeRequest method url decoder session body =
         | _ -> return Failure [ response.responseText ]
     }
 
+
 let private safeGet url decoder session = makeRequest GET url decoder (Some session) None
+
 
 let private safeChange method (body: JsonValue) url decoder session =
     Some(Encode.toString 0 body) |> makeRequest method url decoder (Some session)
 
+
 let private safePut url decoder session (body: JsonValue) = safeChange PUT body url decoder session
+
 
 let private safePost url decoder session (body: JsonValue) = safeChange POST body url decoder session
 
+
 let private get url decoder = makeRequest GET url decoder None None
+
 
 let private post url decoder body = Some(Encode.toString 0 body) |> makeRequest POST url decoder None
 
@@ -72,30 +80,37 @@ module Articles =
 
     let articlesBaseUrl = sprintf "%sarticles/" baseUrl
 
+
     let fetchArticles offset =
         let url = sprintf "%s?limit=10&offset=%i" articlesBaseUrl offset
         get url Article.ArticlesList.Decoder
+
 
     let fetchArticle slug =
         let url = sprintf "%s/%s" articlesBaseUrl slug
         get url (Decode.field "article" Article.Article.Decoder)
 
+
     let fetchComments slug =
         let url = sprintf "%s/%s/comments" articlesBaseUrl slug
         get url Comment.DecoderList
+
 
     let createArticle session (article: Article.ValidatedSimplifiedArticle) =
         Article.validatedToJson article
         |> safePost articlesBaseUrl (Decode.field "article" Article.Article.Decoder) session
 
+
     let updateArticle session (slug, article: Article.ValidatedSimplifiedArticle) =
         let url = sprintf "%s/%s" articlesBaseUrl slug
         Article.validatedToJson article |> safePut url (Decode.field "article" Article.Article.Decoder) session
+
 
     let createComment (payload: {| Session: Session; Slug: string; CommentBody: string |}) =
         let url = sprintf "%s/%s/comments" articlesBaseUrl payload.Slug
         let comment = Encode.object [ ("body", Encode.string payload.CommentBody) ]
         safePost url (Decode.field "comment" Comment.Decoder) payload.Session {| comment = comment |}
+
 
 module Tags =
 
@@ -108,18 +123,23 @@ module Users =
 
     let usersBaseUrl = sprintf "%susers/" baseUrl
 
+
     let createUser (createUser: {| username: string; email: string; password: string |}) =
         post usersBaseUrl (Decode.field "user" Session.Decoder) {| user = createUser |}
+
 
     let login (credentials: {| email: string; password: string |}) =
         let url = sprintf "%slogin/" usersBaseUrl
         post url (Decode.field "user" Session.Decoder) {| user = credentials |}
 
+
     let fetchUserWithDecoder decoder session =
         let url = sprintf "%suser/" baseUrl
         safeGet url (Decode.field "user" decoder) session
 
+
     let fetchUser session = fetchUserWithDecoder User.User.Decoder session
+
 
     let updateUser session (validatedUser: User.ValidatedUser, password) =
         let url = sprintf "%suser/" baseUrl
