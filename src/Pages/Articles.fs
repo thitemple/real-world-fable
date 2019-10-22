@@ -13,6 +13,10 @@ open Api
 
 // TYPES
 
+type ArticlesView =
+    | Feed
+    | Global
+
 type Msg =
     | ArticlesFetched of RemoteData<string list, ArticlesList>
     | TagsFetched of RemoteData<string list, Tag list>
@@ -21,25 +25,27 @@ type Msg =
     | SetArticlesPage of int
     | FavoriteArticle of Article
     | UnfavoriteArticle of Article
+    | ToggleArticlesView of ArticlesView
 
 type Model =
     { Articles: RemoteData<string list, ArticlesList>
       PopularTags: RemoteData<string list, Tag list>
       CurrentArticlesPage: int
+      ArticlesView: ArticlesView
       Session: Session option }
 
 
 // COMMANDS
 
-let private fetchArticles session page =
+let private fetchArticles session articlesView page =
     let offset = page - 1
-    match session with
-    | Some s ->
-        Cmd.OfAsync.perform Articles.fetchArticlesWithSession
+    match articlesView, session with
+    | Feed, Some s ->
+        Cmd.OfAsync.perform Articles.fetchFeed
             {| Session = s
                Offset = offset |} ArticlesFetched
 
-    | None -> Cmd.OfAsync.perform Articles.fetchArticles offset ArticlesFetched
+    | _ -> Cmd.OfAsync.perform Articles.fetchArticles offset ArticlesFetched
 
 
 let private fetchTags = Cmd.OfAsync.perform Tags.fetchTags () TagsFetched
@@ -60,12 +66,14 @@ let private unfavArticle session article =
 // STATE
 
 let init session =
+    let articlesView = Option.map (fun _ -> Feed) session |> Option.defaultValue Global
     { Articles = Loading
       PopularTags = Loading
       CurrentArticlesPage = 1
+      ArticlesView = articlesView
       Session = session },
     Cmd.batch
-        [ fetchArticles session 1
+        [ fetchArticles session articlesView 1
           fetchTags ]
 
 
@@ -73,7 +81,8 @@ let update msg model: Model * Cmd<Msg> =
     match msg with
     | ArticlesFetched data -> { model with Articles = data }, Cmd.none
 
-    | SetArticlesPage page -> { model with CurrentArticlesPage = page }, fetchArticles model.Session page
+    | SetArticlesPage page ->
+        { model with CurrentArticlesPage = page }, fetchArticles model.Session model.ArticlesView page
 
     | TagsFetched data -> { model with PopularTags = data }, Cmd.none
 
@@ -110,6 +119,9 @@ let update msg model: Model * Cmd<Msg> =
         | Some s -> model, unfavArticle s article
 
         | None -> model, Cmd.none
+
+    | ToggleArticlesView articlesView ->
+        { model with ArticlesView = articlesView }, fetchArticles model.Session articlesView 1
 
 
 // VIEW
@@ -191,12 +203,32 @@ let private banner =
                 p [] [ str "A place to share your knowledge." ] ] ]
 
 
-let private feedToggle =
+let private feedToggle dispatch articlesView session =
     div [ ClassName "feed-toggle" ]
         [ ul [ ClassName "nav nav-pills outline-active" ]
-              [ li [ ClassName "nav-item" ] [ a [ ClassName "nav-link disabled" ] [ str "Your Feed" ] ]
+              [ (match session with
+                 | Some _ ->
+                     li [ ClassName "nav-item" ]
+                         [ a
+                             [ classList
+                                 [ ("nav-link", true)
+                                   ("active", articlesView = Feed) ]
+                               Href ""
+                               OnClick(fun ev ->
+                                   ev.preventDefault()
+                                   dispatch <| ToggleArticlesView Feed) ] [ str "Your Feed" ] ]
 
-                li [ ClassName "nav-item" ] [ a [ ClassName "nav-link active" ] [ str "Global Feed" ] ] ] ]
+                 | None -> empty)
+
+                li [ ClassName "nav-item" ]
+                    [ a
+                        [ classList
+                            [ ("nav-link", true)
+                              ("active", articlesView = Global) ]
+                          Href ""
+                          OnClick(fun ev ->
+                              ev.preventDefault()
+                              dispatch <| ToggleArticlesView Global) ] [ str "Global Feed" ] ] ] ]
 
 
 let view dispatch model =
@@ -205,8 +237,11 @@ let view dispatch model =
           div [ ClassName "container page" ]
               [ div [ ClassName "row" ]
                     [ div [ ClassName "col-md-9" ]
-                          [ feedToggle
+                          [ feedToggle dispatch model.ArticlesView model.Session
                             (match model.Articles with
+                             | Success({ Articles = [] }) ->
+                                 div [ ClassName "article-preview" ] [ str "No articles here... yet." ]
+
                              | Success articles ->
                                  fragment []
                                      [ div [] (List.map (article dispatch) articles.Articles)

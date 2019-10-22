@@ -88,13 +88,15 @@ module Articles =
         let url = sprintf "%s?limit=10&offset=%i" articlesBaseUrl offset
         get url Article.ArticlesList.Decoder
 
-    let fetchArticlesWithSession (payload: {| Session: Session; Offset: int |}) =
-        let url = sprintf "%s?limit=10&offset=%i" articlesBaseUrl payload.Offset
-        safeGet url Article.ArticlesList.Decoder payload.Session
 
     let fetchArticle slug =
         let url = sprintf "%s/%s" articlesBaseUrl slug
         get url (Decode.field "article" Article.Article.Decoder)
+
+
+    let fetchFeed (payload: {| Session: Session; Offset: int |}) =
+        let url = sprintf "%sfeed?limit=10&offset=%i" articlesBaseUrl payload.Offset
+        safeGet url Article.ArticlesList.Decoder payload.Session
 
 
     let fetchComments slug =
@@ -117,9 +119,11 @@ module Articles =
         let comment = Encode.object [ ("body", Encode.string payload.CommentBody) ]
         safePost url (Decode.field "comment" Comment.Decoder) payload.Session {| comment = comment |}
 
+
     let favoriteArticle (payload: {| Session: Session; Article: Article.Article |}) =
         let url = sprintf "%s/%s/favorite" articlesBaseUrl payload.Article.Slug
         safePost url (Decode.field "article" Article.Article.Decoder) payload.Session ""
+
 
     let unfavoriteArticle (payload: {| Session: Session; Article: Article.Article |}) =
         let url = sprintf "%s/%s/favorite" articlesBaseUrl payload.Article.Slug
