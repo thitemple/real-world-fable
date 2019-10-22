@@ -178,4 +178,4 @@ type Profile =
             { Username = get.Required.Field "username" Decode.string
               Bio = get.Optional.Field "bio" Decode.string
               Image = get.Required.Field "image" Decode.string
-              Following = get.Required.Field "following" Decode.bool }
+              Following = get.Required.Field "folowing" Decode.bool }
