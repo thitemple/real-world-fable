@@ -115,6 +115,8 @@ let view dispatch model =
         [ (match model.Profile with
            | Success profile -> userInfo profile
 
+           | Failure err -> div [] (List.map (fun e -> p [] [ str e ]) err)
+
            | _ -> empty)
 
           div [ ClassName "container" ]

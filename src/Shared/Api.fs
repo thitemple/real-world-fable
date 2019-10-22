@@ -178,4 +178,4 @@ module Users =
 module Profiles =
     let fetchProfile username =
         let url = sprintf "%sprofiles/%s/" baseUrl username
-        get url (Decode.field "profile" Profile.Decoder)
+        get url (Decode.field "profle" Profile.Decoder)
