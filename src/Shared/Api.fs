@@ -84,6 +84,12 @@ module Articles =
     let articlesBaseUrl = sprintf "%sarticles/" baseUrl
 
 
+    let fetchArticlesWithTag (payload: {| Tag: Tag; Offset: int |}) =
+        let (Tag tag) = payload.Tag
+        let url = sprintf "%s?tag=%s&limit=10&offset=%i" articlesBaseUrl tag payload.Offset
+        get url Article.ArticlesList.Decoder
+
+
     let fetchArticles offset =
         let url = sprintf "%s?limit=10&offset=%i" articlesBaseUrl offset
         get url Article.ArticlesList.Decoder

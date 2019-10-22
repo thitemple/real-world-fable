@@ -16,6 +16,7 @@ open Api
 type ArticlesView =
     | Feed
     | Global
+    | TagFeed of Tag
 
 type Msg =
     | ArticlesFetched of RemoteData<string list, ArticlesList>
@@ -43,6 +44,11 @@ let private fetchArticles session articlesView page =
     | Feed, Some s ->
         Cmd.OfAsync.perform Articles.fetchFeed
             {| Session = s
+               Offset = offset |} ArticlesFetched
+
+    | TagFeed tag, _ ->
+        Cmd.OfAsync.perform Articles.fetchArticlesWithTag
+            {| Tag = tag
                Offset = offset |} ArticlesFetched
 
     | _ -> Cmd.OfAsync.perform Articles.fetchArticles offset ArticlesFetched
@@ -165,8 +171,18 @@ let private article dispatch (article: Article) =
 
                 tags article.TagList ] ]
 
-let private tagPills tags =
-    fragment [] (List.map (fun (Tag tag) -> a [ ClassName "tag-pill tag-default" ] [ str tag ]) tags)
+let private tagPills dispatch tags =
+    fragment []
+        (List.map (fun (Tag tag) ->
+            a
+                [ ClassName "tag-pill tag-default"
+                  Href ""
+                  OnClick(fun ev ->
+                      ev.preventDefault()
+                      Tag tag
+                      |> TagFeed
+                      |> ToggleArticlesView
+                      |> dispatch) ] [ str tag ]) tags)
 
 let private sidebar dispatch popularTags =
     div [ ClassName "sidebar" ]
@@ -174,7 +190,7 @@ let private sidebar dispatch popularTags =
 
           div [ ClassName "tag-list" ]
               [ (match popularTags with
-                 | Success tags -> tagPills tags
+                 | Success tags -> tagPills dispatch tags
 
                  | _ -> empty) ] ]
 
@@ -228,7 +244,13 @@ let private feedToggle dispatch articlesView session =
                           Href ""
                           OnClick(fun ev ->
                               ev.preventDefault()
-                              dispatch <| ToggleArticlesView Global) ] [ str "Global Feed" ] ] ] ]
+                              dispatch <| ToggleArticlesView Global) ] [ str "Global Feed" ] ]
+
+                (match articlesView with
+                 | TagFeed(Tag t) ->
+                     li [ ClassName "nav-item" ] [ a [ ClassName "nav-link active" ] [ str <| sprintf "# %s" t ] ]
+
+                 | _ -> empty) ] ]
 
 
 let view dispatch model =
