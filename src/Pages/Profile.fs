@@ -115,7 +115,11 @@ let view dispatch model =
         [ (match model.Profile with
            | Success profile -> userInfo profile
 
-           | Failure err -> div [] (List.map (fun e -> p [] [ str e ]) err)
+           | Failure err ->
+               div
+                   [ Style [ Padding 10
+                             Color "red"
+                             BackgroundColor "lightpink" ] ] (List.map (fun e -> p [] [ str e ]) err)
 
            | _ -> empty)
 
