@@ -21,11 +21,11 @@ type ArticlesView =
 type Msg =
     | ArticlesFetched of RemoteData<string list, ArticlesList>
     | TagsFetched of RemoteData<string list, Tag list>
-    | ArticleFavorited of RemoteData<string list, Article>
-    | ArticleUnfavorited of RemoteData<string list, Article>
+    | ArticleFavorited of RemoteData<string list, FullArticle>
+    | ArticleUnfavorited of RemoteData<string list, FullArticle>
     | SetArticlesPage of int
-    | FavoriteArticle of Article
-    | UnfavoriteArticle of Article
+    | FavoriteArticle of FullArticle
+    | UnfavoriteArticle of FullArticle
     | ToggleArticlesView of ArticlesView
 
 type Model =
@@ -137,7 +137,7 @@ let private tags tags =
         (List.map (fun tag -> li [ ClassName "tag-default tag-pill tag-outline" ] [ str tag ]) tags)
 
 
-let private article dispatch (article: Article) =
+let private article dispatch (article: FullArticle) =
     div [ ClassName "article-preview" ]
         [ div [ ClassName "article-meta" ]
               [ a [ Href "#" ] [ img [ Src article.Author.Image ] ] // TODO: link to author

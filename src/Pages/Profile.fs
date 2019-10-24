@@ -79,7 +79,7 @@ let private userInfo (profile: Profile) =
                                   str <| sprintf " Follow %s" profile.Username ] ] ] ] ]
 
 
-let private article (article: Article) =
+let private article (article: FullArticle) =
     div [ ClassName "article-preview" ]
         [ div [ ClassName "article-meta" ]
               [ a [] [ img [ Src article.Author.Image ] ]

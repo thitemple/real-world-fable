@@ -21,7 +21,7 @@ type Model =
       TagPlaceholder: string
       Mode: Mode
       Errors: string list
-      Article: RemoteData<string list, SimplifiedArticle> }
+      Article: RemoteData<string list, Article> }
 
 type Msg =
     | SetTitle of string
@@ -31,8 +31,8 @@ type Msg =
     | AddTag of string
     | RemoveTag of string
     | SaveArticle
-    | ArticleSaved of RemoteData<string list, Article>
-    | ArticleLoaded of RemoteData<string list, Article>
+    | ArticleSaved of RemoteData<string list, FullArticle>
+    | ArticleLoaded of RemoteData<string list, FullArticle>
 
 
 // COMMANDS
@@ -141,7 +141,7 @@ let private tagList dispatch tags =
          |> List.map tag)
 
 
-let private form dispatch tag (article: SimplifiedArticle) =
+let private form dispatch tag (article: Article) =
     form [ OnSubmit(fun _ -> dispatch SaveArticle) ]
         [ fieldset []
               [ fieldset [ ClassName "form-group" ]

@@ -24,14 +24,14 @@ type Authentication =
     | Unauthenticated
 
 type Model =
-    { Article: RemoteData<string list, Article>
+    { Article: RemoteData<string list, FullArticle>
       Comments: RemoteData<string list, Comment list>
       NewComment: string
       Errors: string list
       Authentication: Authentication }
 
 type Msg =
-    | ArticleFetched of RemoteData<string list, Article>
+    | ArticleFetched of RemoteData<string list, FullArticle>
     | CommentsFetched of RemoteData<string list, Comment list>
     | CommentCreated of RemoteData<string list, Comment>
     | UserFetched of RemoteData<string list, User>
@@ -202,7 +202,7 @@ let private articleOwnerButtons dispatch article =
                 str " Delete Article" ] ] // TODO: delete an article
 
 
-let private infoButtons dispatch authentication (article: Article) =
+let private infoButtons dispatch authentication (article: FullArticle) =
     match authentication with
     | Authenticated auth when auth.Session.Username = article.Author.Username -> articleOwnerButtons dispatch article
 

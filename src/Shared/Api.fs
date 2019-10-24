@@ -97,7 +97,7 @@ module Articles =
 
     let fetchArticle slug =
         let url = sprintf "%s/%s" articlesBaseUrl slug
-        get url (Decode.field "article" Article.Decoder)
+        get url (Decode.field "article" FullArticle.Decoder)
 
 
     let fetchFeed (payload: {| Session: Session; Offset: int |}) =
@@ -110,13 +110,13 @@ module Articles =
         get url Comment.DecoderList
 
 
-    let createArticle session (article: Article.ValidatedSimplifiedArticle) =
-        Article.validatedToJson article |> safePost articlesBaseUrl (Decode.field "article" Article.Decoder) session
+    let createArticle session (article: Article.ValidatedArticle) =
+        Article.validatedToJson article |> safePost articlesBaseUrl (Decode.field "article" FullArticle.Decoder) session
 
 
-    let updateArticle session (slug, article: Article.ValidatedSimplifiedArticle) =
+    let updateArticle session (slug, article: Article.ValidatedArticle) =
         let url = sprintf "%s/%s" articlesBaseUrl slug
-        Article.validatedToJson article |> safePut url (Decode.field "article" Article.Decoder) session
+        Article.validatedToJson article |> safePut url (Decode.field "article" FullArticle.Decoder) session
 
 
     let createComment (payload: {| Session: Session; Slug: string; CommentBody: string |}) =
@@ -125,14 +125,14 @@ module Articles =
         safePost url (Decode.field "comment" Comment.Decoder) payload.Session {| comment = comment |}
 
 
-    let favoriteArticle (payload: {| Session: Session; Article: Article |}) =
+    let favoriteArticle (payload: {| Session: Session; Article: FullArticle |}) =
         let url = sprintf "%s/%s/favorite" articlesBaseUrl payload.Article.Slug
-        safePost url (Decode.field "article" Article.Decoder) payload.Session ""
+        safePost url (Decode.field "article" FullArticle.Decoder) payload.Session ""
 
 
-    let unfavoriteArticle (payload: {| Session: Session; Article: Article |}) =
+    let unfavoriteArticle (payload: {| Session: Session; Article: FullArticle |}) =
         let url = sprintf "%s/%s/favorite" articlesBaseUrl payload.Article.Slug
-        safeDelete url (Decode.field "article" Article.Decoder) payload.Session
+        safeDelete url (Decode.field "article" FullArticle.Decoder) payload.Session
 
 
 

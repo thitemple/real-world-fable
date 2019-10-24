@@ -43,7 +43,7 @@ type User =
               Image = get.Optional.Field "image" Decode.string }
 
 
-type Article =
+type FullArticle =
     { Slug: string
       Title: string
       Description: string
@@ -55,7 +55,7 @@ type Article =
       FavoritesCount: int
       Author: Author }
 
-    static member Decoder: Decoder<Article> =
+    static member Decoder: Decoder<FullArticle> =
         Decode.object <| fun get ->
             { Slug = get.Required.Field "slug" Decode.string
               Title = get.Required.Field "title" Decode.string
@@ -106,15 +106,15 @@ type Tag =
 
 module Article =
 
-    type SimplifiedArticle =
+    type Article =
         { Title: string
           Description: string
           Body: string
           TagList: Set<string> }
 
-    type ValidatedSimplifiedArticle = private ValidatedSimplifiedArticle of SimplifiedArticle
+    type ValidatedArticle = private ValidatedArticle of Article
 
-    let validateArticle (simplifiedArticle: SimplifiedArticle) =
+    let validateArticle (simplifiedArticle: Article) =
         let isTitleEmpty = isEmpty "title can't be empty" (fun a -> a.Title)
 
         let isDescriptionEmpty = isEmpty "description can't be empty" (fun a -> a.Body)
@@ -125,9 +125,9 @@ module Article =
         |> isTitleEmpty
         |> Result.bind isDescriptionEmpty
         |> Result.bind isBodyEmpty
-        |> Result.map ValidatedSimplifiedArticle
+        |> Result.map ValidatedArticle
 
-    let validatedToJson (ValidatedSimplifiedArticle article) =
+    let validatedToJson (ValidatedArticle article) =
         Encode.object
             [ "title", Encode.string article.Title
               "description", Encode.string article.Description
@@ -140,12 +140,12 @@ module Article =
 
 
     type ArticlesList =
-        { Articles: Article list
+        { Articles: FullArticle list
           ArticlesCount: int }
 
         static member Decoder: Decoder<ArticlesList> =
             Decode.object <| fun get ->
-                { Articles = get.Required.Field "articles" (Decode.list Article.Decoder)
+                { Articles = get.Required.Field "articles" (Decode.list FullArticle.Decoder)
                   ArticlesCount = get.Required.Field "articlesCount" Decode.int }
 
 
