@@ -17,7 +17,7 @@ open Elements
 
 type AuthenticatedSession =
     { Session: Session
-      User: RemoteData<string list, User.User> }
+      User: RemoteData<string list, User> }
 
 type Authentication =
     | Authenticated of AuthenticatedSession
@@ -34,7 +34,7 @@ type Msg =
     | ArticleFetched of RemoteData<string list, Article>
     | CommentsFetched of RemoteData<string list, Comment list>
     | CommentCreated of RemoteData<string list, Comment>
-    | UserFetched of RemoteData<string list, User.User>
+    | UserFetched of RemoteData<string list, User>
     | SetNewComment of string
     | SubmitComment
 
@@ -142,7 +142,7 @@ let private comment (comment: Comment) =
                       span [ ClassName "date-posted" ] [ str <| comment.CreatedAt.ToLongDateString() ] ] ] ]
 
 
-let private commentForm dispatch (user: User.User) errors newComment =
+let private commentForm dispatch (user: User) errors newComment =
     form
         [ ClassName "card comment-form"
           OnSubmit(fun _ -> dispatch SubmitComment) ]
@@ -202,7 +202,7 @@ let private articleOwnerButtons dispatch article =
                 str " Delete Article" ] ] // TODO: delete an article
 
 
-let private infoButtons dispatch authentication (article: Article.Article) =
+let private infoButtons dispatch authentication (article: Article) =
     match authentication with
     | Authenticated auth when auth.Session.Username = article.Author.Username -> articleOwnerButtons dispatch article
 

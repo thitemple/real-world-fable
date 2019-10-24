@@ -97,7 +97,7 @@ module Articles =
 
     let fetchArticle slug =
         let url = sprintf "%s/%s" articlesBaseUrl slug
-        get url (Decode.field "article" Article.Article.Decoder)
+        get url (Decode.field "article" Article.Decoder)
 
 
     let fetchFeed (payload: {| Session: Session; Offset: int |}) =
@@ -111,13 +111,12 @@ module Articles =
 
 
     let createArticle session (article: Article.ValidatedSimplifiedArticle) =
-        Article.validatedToJson article
-        |> safePost articlesBaseUrl (Decode.field "article" Article.Article.Decoder) session
+        Article.validatedToJson article |> safePost articlesBaseUrl (Decode.field "article" Article.Decoder) session
 
 
     let updateArticle session (slug, article: Article.ValidatedSimplifiedArticle) =
         let url = sprintf "%s/%s" articlesBaseUrl slug
-        Article.validatedToJson article |> safePut url (Decode.field "article" Article.Article.Decoder) session
+        Article.validatedToJson article |> safePut url (Decode.field "article" Article.Decoder) session
 
 
     let createComment (payload: {| Session: Session; Slug: string; CommentBody: string |}) =
@@ -126,14 +125,14 @@ module Articles =
         safePost url (Decode.field "comment" Comment.Decoder) payload.Session {| comment = comment |}
 
 
-    let favoriteArticle (payload: {| Session: Session; Article: Article.Article |}) =
+    let favoriteArticle (payload: {| Session: Session; Article: Article |}) =
         let url = sprintf "%s/%s/favorite" articlesBaseUrl payload.Article.Slug
-        safePost url (Decode.field "article" Article.Article.Decoder) payload.Session ""
+        safePost url (Decode.field "article" Article.Decoder) payload.Session ""
 
 
-    let unfavoriteArticle (payload: {| Session: Session; Article: Article.Article |}) =
+    let unfavoriteArticle (payload: {| Session: Session; Article: Article |}) =
         let url = sprintf "%s/%s/favorite" articlesBaseUrl payload.Article.Slug
-        safeDelete url (Decode.field "article" Article.Article.Decoder) payload.Session
+        safeDelete url (Decode.field "article" Article.Decoder) payload.Session
 
 
 
@@ -167,12 +166,12 @@ module Users =
         safeGet url (Decode.field "user" decoder) session
 
 
-    let fetchUser session = fetchUserWithDecoder User.User.Decoder session
+    let fetchUser session = fetchUserWithDecoder User.Decoder session
 
 
     let updateUser session (validatedUser: User.ValidatedUser, password) =
         let url = sprintf "%suser/" baseUrl
-        User.validatedToJsonValue validatedUser password |> safePut url (Decode.field "user" User.User.Decoder) session
+        User.validatedToJsonValue validatedUser password |> safePut url (Decode.field "user" User.Decoder) session
 
 
 module Profiles =

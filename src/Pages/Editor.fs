@@ -31,8 +31,8 @@ type Msg =
     | AddTag of string
     | RemoveTag of string
     | SaveArticle
-    | ArticleSaved of RemoteData<string list, Article.Article>
-    | ArticleLoaded of RemoteData<string list, Article.Article>
+    | ArticleSaved of RemoteData<string list, Article>
+    | ArticleLoaded of RemoteData<string list, Article>
 
 
 // COMMANDS

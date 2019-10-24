@@ -5,19 +5,70 @@ open Thoth.Json
 
 open Validation
 
-module User =
-    type User =
-        { Username: string
-          Email: string
-          Bio: string option
-          Image: string option }
+type Author =
+    { Username: string
+      Bio: string option
+      Image: string
+      Following: bool }
 
-        static member Decoder: Decoder<User> =
-            Decode.object <| fun get ->
-                { Username = get.Required.Field "username" Decode.string
-                  Email = get.Required.Field "email" Decode.string
-                  Bio = get.Optional.Field "bio" Decode.string
-                  Image = get.Optional.Field "image" Decode.string }
+    static member Decoder =
+        Decode.object <| fun get ->
+            { Username = get.Required.Field "username" Decode.string
+              Bio = get.Optional.Field "bio" Decode.string
+              Image = get.Required.Field "image" Decode.string
+              Following = get.Required.Field "following" Decode.bool }
+
+
+type Session =
+    { Username: string
+      Token: string }
+
+    static member Decoder: Decoder<Session> =
+        Decode.object <| fun get ->
+            { Username = get.Required.Field "username" Decode.string
+              Token = get.Required.Field "token" Decode.string }
+
+
+type User =
+    { Username: string
+      Email: string
+      Bio: string option
+      Image: string option }
+
+    static member Decoder: Decoder<User> =
+        Decode.object <| fun get ->
+            { Username = get.Required.Field "username" Decode.string
+              Email = get.Required.Field "email" Decode.string
+              Bio = get.Optional.Field "bio" Decode.string
+              Image = get.Optional.Field "image" Decode.string }
+
+
+type Article =
+    { Slug: string
+      Title: string
+      Description: string
+      Body: string
+      TagList: string list
+      CreatedAt: DateTime
+      UpdatedAt: DateTime
+      Favorited: bool
+      FavoritesCount: int
+      Author: Author }
+
+    static member Decoder: Decoder<Article> =
+        Decode.object <| fun get ->
+            { Slug = get.Required.Field "slug" Decode.string
+              Title = get.Required.Field "title" Decode.string
+              Description = get.Required.Field "description" Decode.string
+              Body = get.Required.Field "body" Decode.string
+              TagList = get.Required.Field "tagList" (Decode.list Decode.string)
+              CreatedAt = get.Required.Field "createdAt" Decode.datetime
+              UpdatedAt = get.Required.Field "updatedAt" Decode.datetime
+              Favorited = get.Required.Field "favorited" Decode.bool
+              FavoritesCount = get.Required.Field "favoritesCount" Decode.int
+              Author = get.Required.Field "author" Author.Decoder }
+
+module User =
 
     type ValidatedUser = private ValidatedUser of User
 
@@ -45,30 +96,6 @@ module User =
         |> Result.bind isEmailEmpty
         |> Result.bind isValidEmail
         |> Result.map ValidatedUser
-
-
-type Session =
-    { Username: string
-      Token: string }
-
-    static member Decoder: Decoder<Session> =
-        Decode.object <| fun get ->
-            { Username = get.Required.Field "username" Decode.string
-              Token = get.Required.Field "token" Decode.string }
-
-
-type Author =
-    { Username: string
-      Bio: string option
-      Image: string
-      Following: bool }
-
-    static member Decoder =
-        Decode.object <| fun get ->
-            { Username = get.Required.Field "username" Decode.string
-              Bio = get.Optional.Field "bio" Decode.string
-              Image = get.Required.Field "image" Decode.string
-              Following = get.Required.Field "following" Decode.bool }
 
 
 type Tag =
@@ -110,31 +137,6 @@ module Article =
                   (article.TagList
                    |> Set.toList
                    |> List.map Encode.string) ]
-
-    type Article =
-        { Slug: string
-          Title: string
-          Description: string
-          Body: string
-          TagList: string list
-          CreatedAt: DateTime
-          UpdatedAt: DateTime
-          Favorited: bool
-          FavoritesCount: int
-          Author: Author }
-
-        static member Decoder: Decoder<Article> =
-            Decode.object <| fun get ->
-                { Slug = get.Required.Field "slug" Decode.string
-                  Title = get.Required.Field "title" Decode.string
-                  Description = get.Required.Field "description" Decode.string
-                  Body = get.Required.Field "body" Decode.string
-                  TagList = get.Required.Field "tagList" (Decode.list Decode.string)
-                  CreatedAt = get.Required.Field "createdAt" Decode.datetime
-                  UpdatedAt = get.Required.Field "updatedAt" Decode.datetime
-                  Favorited = get.Required.Field "favorited" Decode.bool
-                  FavoritesCount = get.Required.Field "favoritesCount" Decode.int
-                  Author = get.Required.Field "author" Author.Decoder }
 
 
     type ArticlesList =
