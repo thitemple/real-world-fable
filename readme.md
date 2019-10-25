@@ -3,7 +3,7 @@
 > ### [Fable](https://fable.io), [Elmish](https://elmish.github.io/elmish/) and [F#](https://fsharp.org) codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://github.com/gothinkster/realworld) spec and API.
 
 
-### [Demo](https://github.com/gothinkster/realworld)&nbsp;&nbsp;&nbsp;&nbsp;[RealWorld](https://github.com/gothinkster/realworld)
+### [Demo](https://real-world-fable.netlify.com/)&nbsp;&nbsp;&nbsp;&nbsp;[RealWorld](https://github.com/gothinkster/realworld)
 
 
 This codebase was created to demonstrate a fully fledged fullstack application built with **[Fable](https://fable.io), [Elmish](https://elmish.github.io/elmish/) and [F#](https://fsharp.org)** including CRUD operations, authentication, routing, pagination, and more.
@@ -29,15 +29,13 @@ You're going to need a few things installed:
 
 ## Development Build
 
-Just run:
-
 `npm start`
 
 And open a browser tab on *http://localhost:8080*
 
 ## Production Build
 
-TBD
+`npm run build`
 
 ## Running the tests
 

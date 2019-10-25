@@ -314,7 +314,7 @@ let view dispatch (model: Model) =
                    [ banner dispatch model.Authentication article
                      div [ ClassName "container page" ]
                          [ div [ ClassName "row article-content" ]
-                               [ div [ ClassName "col-md-12" ] [ str article.Body ] ]
+                               [ div [ ClassName "col-md-12" ] [ str article.Body ] ] // TODO: markdown
 
                            hr []
 
