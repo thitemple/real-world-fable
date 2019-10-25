@@ -4,19 +4,26 @@
   "description": "> ### Fable and F# codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://github.com/gothinkster/realworld) spec and API.",
   "main": "webpack.config.js",
   "dependencies": {
-    "react": "^16.10.2",
-    "react-dom": "^16.10.2"
+    "react": "^16.11.0",
+    "react-dom": "^16.11.0"
   },
   "devDependencies": {
     "@babel/core": "^7.6.4",
-    "fable-compiler": "^2.4.6",
+    "@babel/preset-env": "^7.6.3",
+    "babel-loader": "^8.0.6",
+    "copy-webpack-plugin": "^5.0.4",
+    "core-js": "^3.3.4",
+    "fable-compiler": "^2.4.7",
     "fable-loader": "^2.1.8",
-    "webpack": "^4.41.0",
+    "html-webpack-plugin": "^3.2.0",
+    "webpack": "^4.41.2",
     "webpack-cli": "^3.3.9",
-    "webpack-dev-server": "^3.8.2"
+    "webpack-dev-server": "^3.9.0"
   },
   "scripts": {
-    "start": "webpack-dev-server"
+    "start": "webpack-dev-server",
+    "postinstall": "dotnet restore src/RealWorldFable.fsproj",
+    "build": "webpack"
   },
   "repository": {
     "type": "git",
