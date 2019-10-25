@@ -37,13 +37,22 @@ type Msg =
     | UserFetched of RemoteData<string list, User>
     | DeleteArticle of FullArticle
     | ArticleDeleted of RemoteData<string list, unit>
+    | ToggleFollowAuthor of Author
+    | FollowAuthorToggled of RemoteData<string list, Author>
     | SetNewComment of string
     | SubmitComment
 
 
 // COMMANDS
 
-let private fetchArticle slug = Cmd.OfAsync.perform Articles.fetchArticle slug ArticleFetched
+let private fetchArticle session slug =
+    match session with
+    | Some s ->
+        Cmd.OfAsync.perform Articles.fetchArticleWithSession
+            {| Session = s
+               Slug = slug |} ArticleFetched
+
+    | None -> Cmd.OfAsync.perform Articles.fetchArticle slug ArticleFetched
 
 
 let private fetchComments slug = Cmd.OfAsync.perform Articles.fetchComments slug CommentsFetched
@@ -64,6 +73,15 @@ let private deleteArticle session slug =
         {| Session = session
            Slug = slug |} ArticleDeleted
 
+let private followAuthor session author =
+    Cmd.OfAsync.perform Profiles.createFollower
+        {| Session = session
+           Author = author |} FollowAuthorToggled
+
+let private unfollowAuthor session author =
+    Cmd.OfAsync.perform Profiles.deleteFollower
+        {| Session = session
+           Author = author |} FollowAuthorToggled
 
 // STATE
 
@@ -83,7 +101,7 @@ let init session slug =
       Errors = []
       Authentication = authentication },
     Cmd.batch
-        [ fetchArticle slug
+        [ fetchArticle session slug
           fetchComments slug
           cmdUser ]
 
@@ -141,6 +159,20 @@ let update msg model =
     | ArticleDeleted(Failure errors) -> { model with Errors = errors }, Cmd.none
 
     | ArticleDeleted _ -> model, Cmd.none
+
+    | ToggleFollowAuthor author ->
+        match model.Authentication, author.Following with
+        | Authenticated auth, false -> model, followAuthor auth.Session author
+
+        | Authenticated auth, true -> model, unfollowAuthor auth.Session author
+
+        | _ -> model, Cmd.none
+
+    | FollowAuthorToggled(Success author) ->
+        let article = map (fun (article: FullArticle) -> { article with Author = author }) model.Article
+        { model with Article = article }, Cmd.none
+
+    | FollowAuthorToggled _ -> failwith "Not Implemented"
 
 
 // VIEW
@@ -230,14 +262,20 @@ let private infoButtons dispatch authentication (article: FullArticle) =
     match authentication with
     | Authenticated auth when auth.Session.Username = article.Author.Username -> articleOwnerButtons dispatch article
 
-    | _ ->
+    | Authenticated _ ->
         fragment []
-            [ button [ ClassName "btn btn-sm btn-outline-secondary" ]
+            [ button
+                [ classList
+                    [ ("btn", true)
+                      ("btn-sm", true)
+                      ("btn-outline-secondary", not article.Author.Following)
+                      ("btn-secondary", article.Author.Following) ]
+                  OnClick(fun _ -> dispatch <| ToggleFollowAuthor article.Author) ]
                   [ i [ ClassName "ion-plus-round" ] []
 
-                    str <| sprintf " Follow %s" article.Author.Username
-
-                    span [ ClassName "counter" ] [ str <| sprintf "(10)" ] ] // TODO: author followers
+                    str <| sprintf " %s %s"
+                               (if article.Author.Following then "Unfollow"
+                                else "Follow") article.Author.Username ]
 
               str "  "
 
@@ -247,6 +285,8 @@ let private infoButtons dispatch authentication (article: FullArticle) =
                     str " Favorite Post "
 
                     span [ ClassName "counter" ] [ str <| sprintf "(%i)" article.FavoritesCount ] ] ]
+
+    | _ -> empty
 
 
 let private banner dispatch authentication article =

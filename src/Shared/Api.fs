@@ -98,6 +98,10 @@ module Articles =
         let url = sprintf "%s/%s" articlesBaseUrl slug
         get url (Decode.field "article" FullArticle.Decoder)
 
+    let fetchArticleWithSession (payload: {| Session: Session; Slug: string |}) =
+        let url = sprintf "%s/%s" articlesBaseUrl payload.Slug
+        safeGet url (Decode.field "article" FullArticle.Decoder) payload.Session
+
 
     let fetchFeed (payload: {| Session: Session; Offset: int |}) =
         let url = sprintf "%sfeed?limit=10&offset=%i" articlesBaseUrl payload.Offset
@@ -140,9 +144,9 @@ module Articles =
         get url Article.ArticlesList.Decoder
 
 
-    let deleteArticle (payload: {| Session : Session;  Slug : string|}) =
+    let deleteArticle (payload: {| Session: Session; Slug: string |}) =
         let url = sprintf "%s/%s" articlesBaseUrl payload.Slug
-        safeDelete url (Decode.succeed ()) payload.Session
+        safeDelete url (Decode.succeed()) payload.Session
 
 module Tags =
 
@@ -182,3 +186,11 @@ module Profiles =
     let fetchProfile username =
         let url = sprintf "%sprofiles/%s/" baseUrl username
         get url (Decode.field "profile" Profile.Decoder)
+
+    let createFollower (payload: {| Session: Session; Author: Author |}) =
+        let url = sprintf "%sprofiles/%s/follow" baseUrl payload.Author.Username
+        safePost url (Decode.field "profile" Author.Decoder) payload.Session ""
+
+    let deleteFollower (payload: {| Session: Session; Author: Author |}) =
+        let url = sprintf "%sprofiles/%s/follow" baseUrl payload.Author.Username
+        safeDelete url (Decode.field "profile" Author.Decoder) payload.Session
