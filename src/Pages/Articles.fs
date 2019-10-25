@@ -140,7 +140,7 @@ let private tags tags =
 let private article dispatch (article: FullArticle) =
     div [ ClassName "article-preview" ]
         [ div [ ClassName "article-meta" ]
-              [ a [ href <| Profile article.Author.Username ] [ img [ Src article.Author.Image ] ]
+              [ a [ href <| SessionRoute(Profile article.Author.Username) ] [ img [ Src article.Author.Image ] ]
 
                 div [ ClassName "info" ]
                     [ a [ ClassName "author" ] [ str article.Author.Username ]

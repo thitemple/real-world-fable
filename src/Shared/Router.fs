@@ -8,6 +8,7 @@ type SessionRoute =
     | Settings
     | NewArticle
     | EditArticle of string
+    | Profile of string
     | Logout
 
 type Route =
@@ -16,19 +17,18 @@ type Route =
     | Article of string
     | Articles
     | SessionRoute of SessionRoute
-    | Profile of string
 
 
 let pageParser: Parser<Route -> Route, Route> =
     oneOf
         [ map Article (s "article" </> str)
           map Articles top
-          map Profile (s "profile" </> str)
           map Login (s "login")
           map Register (s "register")
           map (Settings |> SessionRoute) (s "settings")
           map (NewArticle |> SessionRoute) (s "editor")
           map (EditArticle >> SessionRoute) (s "editor" </> str)
+          map (Profile >> SessionRoute) (s "profile" </> str)
           map (Logout |> SessionRoute) (s "logout") ]
 
 
@@ -38,8 +38,6 @@ let toHash route =
 
     | Article slug -> sprintf "article/%s" slug
 
-    | Profile username -> sprintf "profile/%s" username
-
     | Login -> "login"
 
     | Register -> "register"
@@ -47,6 +45,8 @@ let toHash route =
     | SessionRoute Settings -> "settings"
 
     | SessionRoute NewArticle -> "editor"
+
+    | SessionRoute(Profile username) -> sprintf "profile/%s" username
 
     | SessionRoute Logout -> "logout"
 

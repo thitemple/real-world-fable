@@ -6,7 +6,6 @@ open Fable.React.Props
 open Fable.RemoteData
 open System
 
-open Types.Article
 open Router
 open Types
 open Api
@@ -184,7 +183,7 @@ let private comment (comment: Comment) =
           div [ ClassName "card-footer" ]
               [ a
                   [ ClassName "comment-author"
-                    href <| Profile comment.Author.Username ]
+                    href <| SessionRoute(Profile comment.Author.Username) ]
                     [ img
                         [ ClassName "comment-author-img"
                           Src comment.Author.Image ]
@@ -295,12 +294,12 @@ let private banner dispatch authentication article =
               [ h1 [] [ str article.Title ]
 
                 div [ ClassName "article-meta" ]
-                    [ a [ href <| Profile article.Author.Username ] [ img [ Src article.Author.Image ] ]
+                    [ a [ href <| SessionRoute(Profile article.Author.Username) ] [ img [ Src article.Author.Image ] ]
 
                       div [ ClassName "info" ]
                           [ a
                               [ ClassName "author"
-                                href <| Profile article.Author.Username ] [ str article.Author.Username ]
+                                href <| SessionRoute(Profile article.Author.Username) ] [ str article.Author.Username ]
 
                             span [ ClassName "date" ] [ str <| article.CreatedAt.ToLongDateString() ] ]
 
@@ -321,13 +320,13 @@ let view dispatch (model: Model) =
 
                            div [ ClassName "article-actions" ]
                                [ div [ ClassName "article-meta" ]
-                                     [ a [ href <| Profile article.Author.Username ]
+                                     [ a [ href <| SessionRoute(Profile article.Author.Username) ]
                                            [ img [ Src article.Author.Image ] ]
 
                                        div [ ClassName "info" ]
                                            [ a
                                                [ ClassName "author"
-                                                 href <| Profile article.Author.Username ]
+                                                 href <| SessionRoute(Profile article.Author.Username) ]
                                                  [ str article.Author.Username ]
 
                                              span [ ClassName "date" ] [ str <| article.CreatedAt.ToLongDateString() ] ]

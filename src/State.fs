@@ -74,6 +74,10 @@ let setSessionRoute sessionRoute model =
             let editArticleModel, editArticleCmd = Pages.Editor.initEdit session slug
             { model with ActivePage = Editor editArticleModel }, Cmd.map EditorMsg editArticleCmd
 
+        | SessionRoute.Profile username ->
+            let profileModel, profileCmd = Pages.Profile.init session username
+            { model with ActivePage = Profile profileModel }, Cmd.map ProfileMsg profileCmd
+
 
 let setRoute result model =
     let model = { model with CurrentRoute = result }
@@ -100,10 +104,6 @@ let setRoute result model =
         | Route.Register ->
             let registerModel, registerCmd = Pages.Register.init()
             { model with ActivePage = Register registerModel }, Cmd.map RegisterMsg registerCmd
-
-        | Route.Profile username ->
-            let profileModel, profileCmd = Pages.Profile.init username
-            { model with ActivePage = Profile profileModel }, Cmd.map ProfileMsg profileCmd
 
 
 let init session (route: Route option): Model * Cmd<Msg> =

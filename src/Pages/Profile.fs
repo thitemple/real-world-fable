@@ -14,17 +14,21 @@ open Api
 // TYPES
 
 type ArticlesView =
-    | AuthorArticles of RemoteData<string list, ArticlesList>
-    | FavoritedArticles of RemoteData<string list, ArticlesList>
+    | AuthorArticles
+    | FavoritedArticles
 
 type Model =
     { Profile: RemoteData<string list, Profile>
       Username: string
-      ArticlesView: ArticlesView }
+      ArticlesView: ArticlesView
+      Articles: RemoteData<string list, ArticlesList>
+      Session: Session }
 
 type Msg =
     | ProfileLoaded of RemoteData<string list, Profile>
     | ArticlesLoaded of RemoteData<string list, ArticlesList>
+    | ToggleFavoriteArticle of FullArticle
+    | FavoriteArticleToggled of RemoteData<string list, FullArticle>
 
 
 // COMMANDS
@@ -36,12 +40,26 @@ let private fetchArticlesFromAuthor username =
     Cmd.OfAsync.perform Articles.fetchArticlesFromAuthor username ArticlesLoaded
 
 
+let private favArticle session article =
+    Cmd.OfAsync.perform Articles.favoriteArticle
+        {| Session = session
+           Article = article |} FavoriteArticleToggled
+
+
+let private unfavArticle session article =
+    Cmd.OfAsync.perform Articles.unfavoriteArticle
+        {| Session = session
+           Article = article |} FavoriteArticleToggled
+
+
 // STATE
 
-let init username =
+let init session username =
     { Profile = Loading
       Username = username
-      ArticlesView = AuthorArticles Loading },
+      ArticlesView = AuthorArticles
+      Articles = Loading
+      Session = session },
     Cmd.batch
         [ fetchProfile username
           fetchArticlesFromAuthor username ]
@@ -51,11 +69,23 @@ let update msg model =
     match msg with
     | ProfileLoaded data -> { model with Profile = data }, Cmd.none
 
-    | ArticlesLoaded data ->
-        match model.ArticlesView with
-        | AuthorArticles _ -> { model with ArticlesView = AuthorArticles data }, Cmd.none
+    | ArticlesLoaded data -> { model with Articles = data }, Cmd.none
 
-        | FavoritedArticles _ -> { model with ArticlesView = FavoritedArticles data }, Cmd.none
+    | ToggleFavoriteArticle({ Favorited = true } as article) -> model, unfavArticle model.Session article
+
+    | ToggleFavoriteArticle article -> model, favArticle model.Session article
+
+    | FavoriteArticleToggled(Success article) ->
+        let articles =
+            map (fun (articlesList: ArticlesList) ->
+                let articles =
+                    List.map (fun a ->
+                        if a.Slug = article.Slug then article
+                        else a) articlesList.Articles
+                { articlesList with Articles = articles }) model.Articles
+        { model with Articles = articles }, Cmd.none
+
+    | FavoriteArticleToggled _ -> model, Cmd.none
 
 
 // VIEW
@@ -79,20 +109,27 @@ let private userInfo (profile: Profile) =
                                   str <| sprintf " Follow %s" profile.Username ] ] ] ] ]
 
 
-let private article (article: FullArticle) =
+let private article dispatch (article: FullArticle) =
     div [ ClassName "article-preview" ]
         [ div [ ClassName "article-meta" ]
-              [ a [ href <| Profile article.Author.Username ] [ img [ Src article.Author.Image ] ]
+              [ a [ href <| SessionRoute(Profile article.Author.Username) ] [ img [ Src article.Author.Image ] ]
 
                 div [ ClassName "info" ]
-                    [ a [ href <| Profile article.Author.Username ] [ str article.Author.Username ]
+                    [ a [ href <| SessionRoute(Profile article.Author.Username) ] [ str article.Author.Username ]
 
                       span [ ClassName "date" ] [ str <| article.CreatedAt.ToLongDateString() ] ]
 
-                button [ ClassName "btn btn-outline-primary btn-sm pull-xs-right" ]
-                    [ i [ ClassName "ion-heart" ] []
+                div [ ClassName "pull-xs-right" ]
+                    [ button
+                        [ classList
+                            [ ("btn", true)
+                              ("btn-sm", true)
+                              ("btn-outline-primary", not article.Favorited)
+                              ("btn-primary", article.Favorited) ]
+                          OnClick(fun _ -> dispatch <| ToggleFavoriteArticle article) ]
+                          [ i [ ClassName "ion-heart" ] []
 
-                      str " 29" ] ] // TODO: favorite count
+                            str <| sprintf " %i" article.FavoritesCount ] ] ]
 
           a
               [ ClassName "preview-link"
@@ -106,7 +143,7 @@ let private article (article: FullArticle) =
 
 let private articlesToggle =
     div [ ClassName "articles-toggle" ]
-        [ ul [ ClassName "nav nav-pills outline-active" ]
+        [ ul [ ClassName "nav nav-pills outline-active" ]  // TODO: toggle between author's articles and favorites
               [ li [ ClassName "nav-item" ] [ a [ ClassName "nav-link active" ] [ str "My Articles" ] ]
 
                 li [ ClassName "nav-item" ] [ a [ ClassName "nav-link" ] [ str "Favorited Articles" ] ] ] ]
@@ -131,9 +168,7 @@ let view dispatch model =
                           [ fragment []
                                 [ articlesToggle
 
-                                  (match model.ArticlesView with
-                                   | AuthorArticles(Success articles)
-                                   | FavoritedArticles(Success articles) ->
-                                       fragment [] (List.map article articles.Articles)
+                                  (match model.Articles with
+                                   | Success articles -> fragment [] (List.map (article dispatch) articles.Articles)
 
                                    | _ -> empty) ] ] ] ] ]
