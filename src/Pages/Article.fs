@@ -35,6 +35,8 @@ type Msg =
     | CommentsFetched of RemoteData<string list, Comment list>
     | CommentCreated of RemoteData<string list, Comment>
     | UserFetched of RemoteData<string list, User>
+    | DeleteArticle of FullArticle
+    | ArticleDeleted of RemoteData<string list, unit>
     | SetNewComment of string
     | SubmitComment
 
@@ -56,6 +58,12 @@ let private createComment session slug comment =
 
 
 let private fetchUser session = Cmd.OfAsync.perform Users.fetchUser session UserFetched
+
+let private deleteArticle session slug =
+    Cmd.OfAsync.perform Articles.deleteArticle
+        {| Session = session
+           Slug = slug |} ArticleDeleted
+
 
 // STATE
 
@@ -121,6 +129,18 @@ let update msg model =
             { model with Authentication = Authenticated auth }, Cmd.none
 
         | _ -> model, Cmd.none
+
+    | DeleteArticle article ->
+        match model.Authentication with
+        | Authenticated auth -> model, deleteArticle auth.Session article.Slug
+
+        | _ -> model, Cmd.none
+
+    | ArticleDeleted(Success _) -> model, newUrl Articles
+
+    | ArticleDeleted(Failure errors) -> { model with Errors = errors }, Cmd.none
+
+    | ArticleDeleted _ -> model, Cmd.none
 
 
 // VIEW
@@ -198,10 +218,12 @@ let private articleOwnerButtons dispatch article =
 
           str " "
 
-          button [ ClassName "btn btn-outline-danger btn-sm" ]
+          button
+              [ ClassName "btn btn-outline-danger btn-sm"
+                OnClick(fun _ -> dispatch <| DeleteArticle article) ]
               [ i [ ClassName "ion-trash-a" ] []
 
-                str " Delete Article" ] ] // TODO: delete an article
+                str " Delete Article" ] ]
 
 
 let private infoButtons dispatch authentication (article: FullArticle) =

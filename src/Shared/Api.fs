@@ -20,7 +20,6 @@ let private badRequestErrorDecoder str =
 // The errors are returned as a key/pair value of string * string list
 // So converting all errors as just a simple string list
 
-
 let private makeRequest method url decoder session body =
     async {
         let request = Http.request url |> Http.method method
@@ -139,6 +138,11 @@ module Articles =
     let fetchArticlesFromAuthor author =
         let url = sprintf "%s?author=%s&limit=10&offset=%i" articlesBaseUrl author 0
         get url Article.ArticlesList.Decoder
+
+
+    let deleteArticle (payload: {| Session : Session;  Slug : string|}) =
+        let url = sprintf "%s/%s" articlesBaseUrl payload.Slug
+        safeDelete url (Decode.succeed ()) payload.Session
 
 module Tags =
 
