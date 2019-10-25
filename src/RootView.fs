@@ -35,6 +35,13 @@ let authenticatedMenuItems isActiveRoute (session: Session) =
 
           li [ ClassName "nav-item" ]
               [ a
+                  [ classList
+                      [ ("nav-link", true)
+                        ("active", isActiveRoute <| Route.Profile session.Username) ]
+                    href <| Route.Profile session.Username ] [ str session.Username ] ]
+
+          li [ ClassName "nav-item" ]
+              [ a
                   [ ClassName "nav-link"
                     href <| SessionRoute Logout ] [ str " Sign out" ] ] ]
 
@@ -94,6 +101,8 @@ let private activePage dispatch activePage =
     | Settings settingsModel -> Pages.Settings.view (SettingsMsg >> dispatch) settingsModel
 
     | Editor editorModel -> Pages.Editor.view (EditorMsg >> dispatch) editorModel
+
+    | Profile profileModel -> Pages.Profile.view (ProfileMsg >> dispatch) profileModel
 
     | Loading -> div [] [ str "Loading" ]
 

@@ -7,7 +7,7 @@ open Fable.RemoteData
 
 open Types
 open Types.Article
-open Types.User
+open Router
 open Api
 
 
@@ -82,24 +82,26 @@ let private userInfo (profile: Profile) =
 let private article (article: FullArticle) =
     div [ ClassName "article-preview" ]
         [ div [ ClassName "article-meta" ]
-              [ a [] [ img [ Src article.Author.Image ] ]
+              [ a [ href <| Profile article.Author.Username ] [ img [ Src article.Author.Image ] ]
 
                 div [ ClassName "info" ]
-                    [ a [] [ str article.Author.Username ]
+                    [ a [ href <| Profile article.Author.Username ] [ str article.Author.Username ]
 
                       span [ ClassName "date" ] [ str <| article.CreatedAt.ToLongDateString() ] ]
 
                 button [ ClassName "btn btn-outline-primary btn-sm pull-xs-right" ]
                     [ i [ ClassName "ion-heart" ] []
 
-                      str " 29" ] ]
+                      str " 29" ] ] // TODO: favorite count
 
-          a [ ClassName "preview-link" ]
+          a
+              [ ClassName "preview-link"
+                href <| Article article.Slug ]
               [ h1 [] [ str article.Title ]
 
                 p [] [ str article.Description ]
 
-                span [] [ str "Read more..." ] ] ] // TODO: link to author and favorite count
+                span [] [ str "Read more..." ] ] ]
 
 
 let private articlesToggle =

@@ -130,14 +130,16 @@ let private comment (comment: Comment) =
         [ div [ ClassName "card-block" ] [ p [ ClassName "card-text" ] [ str comment.Body ] ]
 
           div [ ClassName "card-footer" ]
-              [ a [ ClassName "comment-author" ]  // TODO: link to comment author
+              [ a
+                  [ ClassName "comment-author"
+                    href <| Profile comment.Author.Username ]
                     [ img
                         [ ClassName "comment-author-img"
                           Src comment.Author.Image ]
 
                       str " "
 
-                      a [ ClassName "comment-author" ] [ str comment.Author.Username ] // TODO: link to comment author
+                      str comment.Author.Username
 
                       span [ ClassName "date-posted" ] [ str <| comment.CreatedAt.ToLongDateString() ] ] ] ]
 
@@ -231,10 +233,12 @@ let private banner dispatch authentication article =
               [ h1 [] [ str article.Title ]
 
                 div [ ClassName "article-meta" ]
-                    [ a [] [ img [ Src article.Author.Image ] ] // TODO: link to author profile
+                    [ a [ href <| Profile article.Author.Username ] [ img [ Src article.Author.Image ] ]
 
                       div [ ClassName "info" ]
-                          [ a [ ClassName "author" ] [ str article.Author.Username ] // TODO: link to author profile
+                          [ a
+                              [ ClassName "author"
+                                href <| Profile article.Author.Username ] [ str article.Author.Username ]
 
                             span [ ClassName "date" ] [ str <| article.CreatedAt.ToLongDateString() ] ]
 
@@ -255,10 +259,14 @@ let view dispatch (model: Model) =
 
                            div [ ClassName "article-actions" ]
                                [ div [ ClassName "article-meta" ]
-                                     [ a [] [ img [ Src article.Author.Image ] ] // TODO: link to author
+                                     [ a [ href <| Profile article.Author.Username ]
+                                           [ img [ Src article.Author.Image ] ]
 
                                        div [ ClassName "info" ]
-                                           [ a [ ClassName "author" ] [ str article.Author.Username ] // TODO: link to author
+                                           [ a
+                                               [ ClassName "author"
+                                                 href <| Profile article.Author.Username ]
+                                                 [ str article.Author.Username ]
 
                                              span [ ClassName "date" ] [ str <| article.CreatedAt.ToLongDateString() ] ]
 

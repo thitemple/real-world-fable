@@ -18,6 +18,7 @@ type Page =
     | Article of Pages.Article.Model
     | Settings of Pages.Settings.Model
     | Editor of Pages.Editor.Model
+    | Profile of Pages.Profile.Model
 
 type Msg =
     | ArticlesMsg of Pages.Articles.Msg
@@ -26,6 +27,7 @@ type Msg =
     | RegisterMsg of Pages.Register.Msg
     | SettingsMsg of Pages.Settings.Msg
     | EditorMsg of Pages.Editor.Msg
+    | ProfileMsg of Pages.Profile.Msg
     | NoOp
 
 type Model =
@@ -98,6 +100,10 @@ let setRoute result model =
         | Route.Register ->
             let registerModel, registerCmd = Pages.Register.init()
             { model with ActivePage = Register registerModel }, Cmd.map RegisterMsg registerCmd
+
+        | Route.Profile username ->
+            let profileModel, profileCmd = Pages.Profile.init username
+            { model with ActivePage = Profile profileModel }, Cmd.map ProfileMsg profileCmd
 
 
 let init session (route: Route option): Model * Cmd<Msg> =
@@ -184,6 +190,14 @@ let update msg model: Model * Cmd<Msg> =
         | Editor newPostModel ->
             let newPostModel, newPostCmd = Pages.Editor.update newPostMsg newPostModel
             { model with ActivePage = Editor newPostModel }, Cmd.map EditorMsg newPostCmd
+
+        | _ -> model, Cmd.none
+
+    | ProfileMsg profileMsg ->
+        match model.ActivePage with
+        | Profile profileModel ->
+            let profileModel, profileCmd = Pages.Profile.update profileMsg profileModel
+            { model with ActivePage = Profile profileModel }, Cmd.map ProfileMsg profileCmd
 
         | _ -> model, Cmd.none
 

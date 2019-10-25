@@ -16,12 +16,14 @@ type Route =
     | Article of string
     | Articles
     | SessionRoute of SessionRoute
+    | Profile of string
 
 
 let pageParser: Parser<Route -> Route, Route> =
     oneOf
         [ map Article (s "article" </> str)
           map Articles top
+          map Profile (s "profile" </> str)
           map Login (s "login")
           map Register (s "register")
           map (Settings |> SessionRoute) (s "settings")
@@ -35,6 +37,8 @@ let toHash route =
     | Articles -> ""
 
     | Article slug -> sprintf "article/%s" slug
+
+    | Profile username -> sprintf "profile/%s" username
 
     | Login -> "login"
 
