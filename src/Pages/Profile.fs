@@ -22,7 +22,7 @@ type Model =
       Username: string
       ArticlesView: ArticlesView
       Articles: RemoteData<string list, ArticlesList>
-      Session: Session }
+      Session: Session option }
 
 type Msg =
     | ProfileLoaded of RemoteData<string list, Profile>
@@ -41,15 +41,22 @@ let private fetchArticlesFromAuthor username =
 
 
 let private favArticle session article =
-    Cmd.OfAsync.perform Articles.favoriteArticle
-        {| Session = session
-           Article = article |} FavoriteArticleToggled
+    session
+    |> Option.map (fun s ->
+        Cmd.OfAsync.perform Articles.favoriteArticle
+            {| Session = s
+               Article = article |} FavoriteArticleToggled)
+    |> Option.defaultValue Cmd.none
 
 
 let private unfavArticle session article =
-    Cmd.OfAsync.perform Articles.unfavoriteArticle
-        {| Session = session
-           Article = article |} FavoriteArticleToggled
+    session
+    |> Option.map
+        (fun s ->
+        Cmd.OfAsync.perform Articles.unfavoriteArticle
+            {| Session = s
+               Article = article |} FavoriteArticleToggled)
+    |> Option.defaultValue Cmd.none
 
 
 // STATE
@@ -112,10 +119,10 @@ let private userInfo (profile: Profile) =
 let private article dispatch (article: FullArticle) =
     div [ ClassName "article-preview" ]
         [ div [ ClassName "article-meta" ]
-              [ a [ href <| SessionRoute(Profile article.Author.Username) ] [ img [ Src article.Author.Image ] ]
+              [ a [ href <| Profile article.Author.Username ] [ img [ Src article.Author.Image ] ]
 
                 div [ ClassName "info" ]
-                    [ a [ href <| SessionRoute(Profile article.Author.Username) ] [ str article.Author.Username ]
+                    [ a [ href <| Profile article.Author.Username ] [ str article.Author.Username ]
 
                       span [ ClassName "date" ] [ str <| article.CreatedAt.ToLongDateString() ] ]
 

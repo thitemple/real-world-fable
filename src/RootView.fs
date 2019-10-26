@@ -37,8 +37,8 @@ let authenticatedMenuItems isActiveRoute (session: Session) =
               [ a
                   [ classList
                       [ ("nav-link", true)
-                        ("active", isActiveRoute <| SessionRoute(SessionRoute.Profile session.Username)) ]
-                    href <| SessionRoute(SessionRoute.Profile session.Username) ] [ str session.Username ] ]
+                        ("active", isActiveRoute <| Router.Profile session.Username) ]
+                    href <| Router.Profile session.Username ] [ str session.Username ] ]
 
           li [ ClassName "nav-item" ]
               [ a
