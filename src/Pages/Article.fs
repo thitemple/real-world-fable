@@ -38,6 +38,8 @@ type Msg =
     | ArticleDeleted of RemoteData<string list, unit>
     | ToggleFollowAuthor of Author
     | FollowAuthorToggled of RemoteData<string list, Author>
+    | ToggleFavoriteArticle of FullArticle
+    | FavoriteArticleToggled of RemoteData<string list, FullArticle>
     | SetNewComment of string
     | SubmitComment
 
@@ -81,6 +83,24 @@ let private unfollowAuthor session author =
     Cmd.OfAsync.perform Profiles.deleteFollower
         {| Session = session
            Author = author |} FollowAuthorToggled
+
+let private favArticle authentication article =
+    match authentication with
+    | Authenticated({ Session = s }) ->
+        Cmd.OfAsync.perform Articles.favoriteArticle
+            {| Session = s
+               Article = article |} FavoriteArticleToggled
+    | _ -> Cmd.none
+
+
+let private unfavArticle authentication article =
+    match authentication with
+    | Authenticated({ Session = s }) ->
+        Cmd.OfAsync.perform Articles.unfavoriteArticle
+            {| Session = s
+               Article = article |} FavoriteArticleToggled
+    | _ -> Cmd.none
+
 
 // STATE
 
@@ -172,6 +192,13 @@ let update msg model =
         { model with Article = article }, Cmd.none
 
     | FollowAuthorToggled _ -> failwith "Not Implemented"
+
+    | ToggleFavoriteArticle({ Favorited = true } as article) -> model, unfavArticle model.Authentication article
+
+    | ToggleFavoriteArticle article -> model, favArticle model.Authentication article
+
+    | FavoriteArticleToggled data -> { model with Article = data }, Cmd.none
+
 
 
 // VIEW
@@ -278,7 +305,13 @@ let private infoButtons dispatch authentication (article: FullArticle) =
 
               str "  "
 
-              button [ ClassName "btn btn-sm btn-outline-primary" ]  // TODO: favorite an article
+              button
+                  [ classList
+                      [ ("btn", true)
+                        ("btn-sm", true)
+                        ("btn-outline-primary", not article.Favorited)
+                        ("btn-primary", article.Favorited) ]
+                    OnClick(fun _ -> dispatch <| ToggleFavoriteArticle article) ]
                   [ i [ ClassName "ion-heart" ] []
 
                     str " Favorite Post "
