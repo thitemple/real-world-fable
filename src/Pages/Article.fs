@@ -373,11 +373,7 @@ let view dispatch (model: Model) =
 
                                              span [ ClassName "date" ] [ str <| article.CreatedAt.ToLongDateString() ] ]
 
-                                       followAuthorButton dispatch article.Author
-
-                                       str " "
-
-                                       favoriteArticleButton dispatch article ] ]
+                                       infoButtons dispatch model.Authentication article ] ]
 
                            comments dispatch model ] ]
 
