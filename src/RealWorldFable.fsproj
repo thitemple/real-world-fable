@@ -4,6 +4,10 @@
     <WarningsAsErrors>FS0025</WarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
+    <!-- BINDINGS -->
+    <Compile Include="Bindings/Markdown.fs" />
+
+
     <!-- EXTENSIONS -->
     <Compile Include="Extensions/Result.fs" />
     <Compile Include="Extensions/Fable.React.fs" />

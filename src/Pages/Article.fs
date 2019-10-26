@@ -1,10 +1,11 @@
 module Pages.Article
 
+open System
 open Elmish
 open Fable.React
 open Fable.React.Props
 open Fable.RemoteData
-open System
+open Fable.Markdown
 
 open Router
 open Types
@@ -347,7 +348,9 @@ let view dispatch (model: Model) =
                    [ banner dispatch model.Authentication article
                      div [ ClassName "container page" ]
                          [ div [ ClassName "row article-content" ]
-                               [ div [ ClassName "col-md-12" ] [ str article.Body ] ] // TODO: markdown
+                               [ div
+                                   [ ClassName "col-md-12"
+                                     DangerouslySetInnerHTML { __html = markdown.toHTML article.Body } ] [] ]
 
                            hr []
 
