@@ -284,6 +284,34 @@ let private articleOwnerButtons dispatch article =
 
                 str " Delete Article" ] ]
 
+let private followAuthorButton dispatch (author: Author) =
+    button
+        [ classList
+            [ ("btn", true)
+              ("btn-sm", true)
+              ("btn-outline-secondary", not author.Following)
+              ("btn-secondary", author.Following) ]
+          OnClick(fun _ -> dispatch <| ToggleFollowAuthor author) ]
+        [ i [ ClassName "ion-plus-round" ] []
+
+          str <| sprintf " %s %s"
+                     (if author.Following then "Unfollow"
+                      else "Follow") author.Username ]
+
+let private favoriteArticleButton dispatch article =
+    button
+        [ classList
+            [ ("btn", true)
+              ("btn-sm", true)
+              ("btn-outline-primary", not article.Favorited)
+              ("btn-primary", article.Favorited) ]
+          OnClick(fun _ -> dispatch <| ToggleFavoriteArticle article) ]
+        [ i [ ClassName "ion-heart" ] []
+
+          str " Favorite Post "
+
+          span [ ClassName "counter" ] [ str <| sprintf "(%i)" article.FavoritesCount ] ]
+
 
 let private infoButtons dispatch authentication (article: FullArticle) =
     match authentication with
@@ -291,33 +319,11 @@ let private infoButtons dispatch authentication (article: FullArticle) =
 
     | Authenticated _ ->
         fragment []
-            [ button
-                [ classList
-                    [ ("btn", true)
-                      ("btn-sm", true)
-                      ("btn-outline-secondary", not article.Author.Following)
-                      ("btn-secondary", article.Author.Following) ]
-                  OnClick(fun _ -> dispatch <| ToggleFollowAuthor article.Author) ]
-                  [ i [ ClassName "ion-plus-round" ] []
-
-                    str <| sprintf " %s %s"
-                               (if article.Author.Following then "Unfollow"
-                                else "Follow") article.Author.Username ]
+            [ followAuthorButton dispatch article.Author
 
               str "  "
 
-              button
-                  [ classList
-                      [ ("btn", true)
-                        ("btn-sm", true)
-                        ("btn-outline-primary", not article.Favorited)
-                        ("btn-primary", article.Favorited) ]
-                    OnClick(fun _ -> dispatch <| ToggleFavoriteArticle article) ]
-                  [ i [ ClassName "ion-heart" ] []
-
-                    str " Favorite Post "
-
-                    span [ ClassName "counter" ] [ str <| sprintf "(%i)" article.FavoritesCount ] ] ]
+              favoriteArticleButton dispatch article ]
 
     | _ -> empty
 
@@ -367,12 +373,11 @@ let view dispatch (model: Model) =
 
                                              span [ ClassName "date" ] [ str <| article.CreatedAt.ToLongDateString() ] ]
 
-                                       button [ ClassName "btn tbn-sm btn-outline-secondary" ]
-                                           [ i [ ClassName "ion-plus-round" ] []
+                                       followAuthorButton dispatch article.Author
 
-                                             str <| sprintf " Follow %s " article.Author.Username
+                                       str " "
 
-                                             span [ ClassName "counter" ] [ str <| sprintf "(10)" ] ] ] ] // TODO: following counter
+                                       favoriteArticleButton dispatch article ] ]
 
                            comments dispatch model ] ]
 
