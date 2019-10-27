@@ -39,4 +39,6 @@ And open a browser tab on *http://localhost:8080*
 
 ## Running the tests
 
-TBD
+`npm test`
+
+Or, to run the tests in watch mode `npm run test:watch`
