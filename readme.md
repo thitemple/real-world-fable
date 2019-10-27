@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/thitemple/real-world-fable.svg?branch=master)](https://travis-ci.org/thitemple/real-world-fable)
+
 # ![RealWorld Example App](logo.png)
 
 > ### [Fable](https://fable.io), [Elmish](https://elmish.github.io/elmish/) and [F#](https://fsharp.org) codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://github.com/gothinkster/realworld) spec and API.
