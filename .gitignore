@@ -12,6 +12,7 @@
 .settings
 .ionide
 
+
 #System Files
 .DS_Store
 Thumbs.db
@@ -19,3 +20,6 @@ Thumbs.db
 # .NET
 bin
 obj
+
+# Tests
+build

@@ -16,7 +16,10 @@
     "core-js": "^3.3.4",
     "fable-compiler": "^2.4.7",
     "fable-loader": "^2.1.8",
+    "fable-splitter": "^2.1.11",
     "html-webpack-plugin": "^3.2.0",
+    "mocha": "^6.2.2",
+    "npm-run-all": "^4.1.5",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.9",
     "webpack-dev-server": "^3.9.0"
@@ -24,7 +27,12 @@
   "scripts": {
     "start": "webpack-dev-server",
     "postinstall": "dotnet restore src/RealWorldFable.fsproj",
-    "build": "webpack"
+    "build": "webpack",
+    "pretest": "fable-splitter tests -o build --commonjs",
+    "test": "mocha build -t 10000",
+    "test:watch": "rm -rf build && npm run pretest && npm-run-all --parallel watch:*",
+    "watch:pretest": "fable-splitter tests -o build --commonjs -w",
+    "watch:test": "mocha build --watch"
   },
   "repository": {
     "type": "git",
