@@ -27,7 +27,7 @@
   "scripts": {
     "start": "webpack-dev-server",
     "postinstall": "dotnet restore src/RealWorldFable.fsproj",
-    "build": "webpack",
+    "build": "npm test && webpack",
     "pretest": "fable-splitter tests -o build --commonjs",
     "test": "mocha build -t 10000",
     "test:watch": "rm -rf build && npm run pretest && npm-run-all --parallel watch:*",
