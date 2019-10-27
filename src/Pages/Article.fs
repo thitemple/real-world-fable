@@ -192,7 +192,7 @@ let update msg model =
         let article = map (fun (article: FullArticle) -> { article with Author = author }) model.Article
         { model with Article = article }, Cmd.none
 
-    | FollowAuthorToggled _ -> failwith "Not Implemented"
+    | FollowAuthorToggled _ -> model, Cmd.none
 
     | ToggleFavoriteArticle({ Favorited = true } as article) -> model, unfavArticle model.Authentication article
 

@@ -168,16 +168,3 @@ type Comment =
         Decode.object <| fun get -> get.Required.At [ "comments" ] (Decode.list Comment.Decoder)
 
     static member Encode comment = Encode.object [ ("body", Encode.string comment.Body) ]
-
-type Profile =
-    { Username: string
-      Bio: string option
-      Image: string
-      Following: bool }
-
-    static member Decoder: Decoder<Profile> =
-        Decode.object <| fun get ->
-            { Username = get.Required.Field "username" Decode.string
-              Bio = get.Optional.Field "bio" Decode.string
-              Image = get.Required.Field "image" Decode.string
-              Following = get.Required.Field "following" Decode.bool }

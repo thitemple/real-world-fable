@@ -138,7 +138,6 @@ module Articles =
         safeDelete url (Decode.field "article" FullArticle.Decoder) payload.Session
 
 
-
     let fetchArticlesFromAuthor author =
         let url = sprintf "%s?author=%s&limit=10&offset=%i" articlesBaseUrl author 0
         get url Article.ArticlesList.Decoder
@@ -147,6 +146,12 @@ module Articles =
     let deleteArticle (payload: {| Session: Session; Slug: string |}) =
         let url = sprintf "%s/%s" articlesBaseUrl payload.Slug
         safeDelete url (Decode.succeed()) payload.Session
+
+
+    let fetchFavoriteArticles (author: Author) =
+        let url = sprintf "%s?favorited=%s&limit=10&offset=%i" articlesBaseUrl author.Username 0
+        get url Article.ArticlesList.Decoder
+
 
 module Tags =
 
@@ -185,7 +190,7 @@ module Users =
 module Profiles =
     let fetchProfile username =
         let url = sprintf "%sprofiles/%s/" baseUrl username
-        get url (Decode.field "profile" Profile.Decoder)
+        get url (Decode.field "profile" Author.Decoder)
 
     let createFollower (payload: {| Session: Session; Author: Author |}) =
         let url = sprintf "%sprofiles/%s/follow" baseUrl payload.Author.Username

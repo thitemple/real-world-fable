@@ -143,7 +143,9 @@ let private article dispatch (article: FullArticle) =
               [ a [ href <| Profile article.Author.Username ] [ img [ Src article.Author.Image ] ]
 
                 div [ ClassName "info" ]
-                    [ a [ ClassName "author" ] [ str article.Author.Username ]
+                    [ a
+                        [ ClassName "author"
+                          href <| Profile article.Author.Username ] [ str article.Author.Username ]
 
                       span [ ClassName "date" ] [ str <| article.CreatedAt.ToLongDateString() ] ]
 
