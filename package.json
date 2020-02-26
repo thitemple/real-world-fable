@@ -12,7 +12,7 @@
     "@babel/core": "^7.6.4",
     "@babel/preset-env": "^7.6.3",
     "babel-loader": "^8.0.6",
-    "copy-webpack-plugin": "^5.0.4",
+    "copy-webpack-plugin": "^5.1.1",
     "core-js": "^3.3.4",
     "fable-compiler": "^2.4.7",
     "fable-loader": "^2.1.8",
